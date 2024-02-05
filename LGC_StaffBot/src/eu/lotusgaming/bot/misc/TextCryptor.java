@@ -1,4 +1,4 @@
-package eu.lotusgaming.bot.handlers;
+package eu.lotusgaming.bot.misc;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;

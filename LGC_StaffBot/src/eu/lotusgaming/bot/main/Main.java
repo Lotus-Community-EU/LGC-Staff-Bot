@@ -13,8 +13,9 @@ import java.util.logging.SimpleFormatter;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
-import eu.lotusgaming.bot.handlers.MySQL;
 import eu.lotusgaming.bot.handlers.ReadyClass;
+import eu.lotusgaming.bot.misc.InfoUpdater;
+import eu.lotusgaming.bot.misc.MySQL;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -101,6 +102,7 @@ public class Main {
 	
 	private static void enableShutdownHook() {
 		Thread printingHook = new Thread(() -> {
+			InfoUpdater.setOnlineStatus(false);
 			MySQL.disconnect();
 			logger.info("Bot is in shutdownprogress, byebye...");
 			closeLogger();

@@ -26,7 +26,14 @@ public class CommandAdder {
 					Commands.slash("tickethistory", "See the chat of that ticket")
 					.setGuildOnly(true)
 					.addOption(OptionType.INTEGER, "ticketid", "The ticket id to lookup")
-					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.slash("ticketban", "Bans a user/id from using the ticket system")
+					.setGuildOnly(true)
+					.addOption(OptionType.INTEGER, "userid", "The userid to ban")
+					.addOption(OptionType.USER, "user", "The user to ban")
+					.addOption(OptionType.STRING, "reason", "The Reason for the ban")
+					.addOption(OptionType.BOOLEAN, "opt", "Whether to ban or unban the user specified")
 					).queue();
 		}
 	}
