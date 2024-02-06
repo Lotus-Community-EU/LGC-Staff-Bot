@@ -16,7 +16,7 @@ public class LotusManager {
 	public static File mainConfig = new File(configFolderName + "/" + mainConfigName);
 	private static File logFolder = new File(configFolderName + "/logs");
 	
-	//must be initialised before bot startup!
+	//must be initialized before bot startup!
 	public void preInit() {
 		long current = System.currentTimeMillis();
 		

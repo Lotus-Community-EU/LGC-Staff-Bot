@@ -16,8 +16,8 @@ import javax.crypto.spec.SecretKeySpec;
 public class TextCryptor {
 	
 	/*
-	 * Class made originally for a former Project "RediCraft" and it's own discord bot for the message logging.
-	 * Author: Grubsic
+	 * Class made originally for a former Project "RediCraft" and its own discord bot for the message logging.
+	 * Author: Sebastián Grubsic
 	 */
 	
 	private static SecretKeySpec secretKey;
@@ -40,8 +40,7 @@ public class TextCryptor {
 	public static String encrypt(String strToEncrypt, char[] secret){
 		try{
 			setKey(secret);
-			Cipher cipher = null;
-			cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 			return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes(StandardCharsets.UTF_8)));
 		}
