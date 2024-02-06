@@ -4,6 +4,7 @@ import java.io.File;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
+import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import net.dv8tion.jda.api.JDA;
 
@@ -55,6 +56,7 @@ public class LotusManager {
 		long current = System.currentTimeMillis();
 		
 		jda.addEventListener(new TicketSCommands());
+		jda.addEventListener(new SuggestionBoard());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 	}

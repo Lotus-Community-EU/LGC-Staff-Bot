@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
-import eu.lotusgaming.bot.handlers.MySQL;
-import eu.lotusgaming.bot.handlers.TextCryptor;
 import eu.lotusgaming.bot.main.LotusManager;
-import eu.lotusgaming.bot.main.Main;
+import eu.lotusgaming.bot.misc.MySQL;
+import eu.lotusgaming.bot.misc.TextCryptor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -158,80 +158,184 @@ public class TicketSCommands extends ListenerAdapter{
 			eb.setColor(event.getMember().getColor());
 			eb.setTitle("Ticket Transcription");
 			if(creator != null) {
-				eb.addField("Ticket created", "by: " + creator.getEffectiveName() + "\nat: " + created, true);
+				eb.addField("Ticket created", "by: " + creator.getAsMention() + "\nat: " + created, true);
 			}else {
 				eb.addField("Ticket created", "by: " + creatorId + "\nat: " + created, true);
 			}
 			if(closer != null) {
-				eb.addField("Ticket closed", "by: " + closer.getEffectiveName() + "\nwith Reason: " + closeReason + "\nat: " + closed, false);
+				eb.addField("Ticket closed", "by: " + closer.getAsMention() + "\nwith Reason: " + closeReason + "\nat: " + closed, false);
 			}else {
 				eb.addField("Ticket closed", "by: " + closedById + "\nwith Reason: " + closeReason + "\nat: " + closed, false);
 			}
 			eb.addField("Topic", topic, false);
+			if(history.length() >= 1023) {
+				history = history.substring(0, 1023);
+			}
 			eb.addField("Message History", history, false);
 			event.getHook().sendMessageEmbeds(eb.build()).queue();
+		}else if(event.getName().equals("ticketban")) {
+			event.deferReply().queue();
+			Guild guild = event.getGuild();
+			Member member = event.getMember();
+			long userid = 0;
+			User target = null;
+			if(event.getOption("userid") != null) {
+				userid = event.getOption("userid").getAsLong();
+			}else if(event.getOption("user") != null) {
+				target = event.getOption("user").getAsUser();
+				userid = target.getIdLong();
+			}
+			String reason = "";
+			boolean opt = false;
+			if(event.getOption("opt") == null) {
+				opt = true;
+			}else {
+				opt = event.getOption("opt").getAsBoolean();
+			}
+			if(event.getOption("reason") == null) {
+				reason = "No Reason specified.";
+			}else {
+				reason = event.getOption("reason").getAsString();
+			}
+			if(opt) {
+				if(addBan(member.getIdLong(), userid, reason)) {
+					event.getHook().sendMessage("Hey, it seems this user is already banned from creating tickets.").queue();
+				}else {
+					if(guild.isMember(target)) {
+						event.getHook().sendMessage(target.getAsMention() + " is now banned from the ticket system.").queue();
+					}else {
+						event.getHook().sendMessage(userid + " is now banned from the ticket system.").queue();
+					}
+				}
+			}else {
+				if(removeBan(userid)) {
+					event.getHook().sendMessage("Hey, it seems this user is already unbanned.").queue();
+				}else {
+					if(guild.isMember(target)) {
+						event.getHook().sendMessage(target.getAsMention() + " is now unbanned from the ticket system.").queue();
+					}else {
+						event.getHook().sendMessage(userid + " is now unbanned from the ticket system.").queue();
+					}
+				}
+			}
+			
 		}
 	}
 	
 	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) {
 		if(event.getComponentId().equals("gensupp")) {
-			if(hasActiveTicket(event.getUser().getIdLong())) {
-				event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+			boolean isBanned = false;
+			String reason = "";
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT banReason FROM bot_s_ticketban WHERE bannedId = ?");
+				ps.setLong(1, event.getMember().getIdLong());
+				ResultSet rs = ps.executeQuery();
+				if(rs.next()) {
+					isBanned = true;
+					reason = rs.getString("banReason");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			if(isBanned) {
+				event.deferReply(true).addContent("You're banned from the ticket system for following reason: " + reason).queue();
 			}else {
-				Guild guild = event.getGuild();
-				Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
-				Member member = event.getMember();
-				guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
-					chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: General Support").queue();
-					addTicketToDB(member.getIdLong(), chan.getIdLong(), "General Support");
-					chan.sendTyping().queue();
-					EmbedBuilder eb = new EmbedBuilder();
-					eb.setDescription("You've opened a new ticket.\n"
-							+ "A staff member will be with you in touch shortly.");
-					eb.addField("Opened by:", member.getAsMention(), true);
-					eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
-					eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
-					chan.sendMessageEmbeds(eb.build()).addActionRow(
-							Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
-							Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
-							).queue();
-				});
+				if(hasActiveTicket(event.getUser().getIdLong())) {
+					event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+				}else {
+					Guild guild = event.getGuild();
+					Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
+					Member member = event.getMember();
+					guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
+						chan.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+						chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: General Support").queue();
+						addTicketToDB(member.getIdLong(), chan.getIdLong(), "General Support");
+						chan.sendTyping().queue();
+						EmbedBuilder eb = new EmbedBuilder();
+						eb.setDescription("You've opened a new ticket.\n"
+								+ "A staff member will be with you in touch shortly.");
+						eb.addField("Opened by:", member.getAsMention(), true);
+						eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
+						eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
+						chan.sendMessage("" + member.getAsMention()).queue(ra -> {
+							ra.delete().queueAfter(10, TimeUnit.SECONDS);
+						});
+						chan.sendMessageEmbeds(eb.build()).addActionRow(
+								Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
+								Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+								).queue();
+					});
+				}
 			}
 		}else if(event.getComponentId().equals("premsupp")) {
-			if(hasActiveTicket(event.getUser().getIdLong())) {
-				event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+			boolean isBanned = false;
+			String reason = "";
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT banReason FROM bot_s_ticketban WHERE bannedId = ?");
+				ps.setLong(1, event.getMember().getIdLong());
+				ResultSet rs = ps.executeQuery();
+				if(rs.next()) {
+					isBanned = true;
+					reason = rs.getString("banReason");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			if(isBanned) {
+				event.deferReply(true).addContent("You're banned from the ticket system for following reason: " + reason).queue();
 			}else {
-				TextInput mcuuid = TextInput.create("uuid", "Minecraft Name", TextInputStyle.SHORT)
-						.setPlaceholder("Your Minecraft Name")
-						.setRequiredRange(3, 16)
-						.build();
-				TextInput mail = TextInput.create("mail", "E-Mail", TextInputStyle.SHORT)
-						.setPlaceholder("Your E-Mail Adress")
-						.setRequiredRange(5, 48)
-						.build();
-				Modal modal = Modal.create("premsuppmodal", "Premium Support")
-						.addComponents(ActionRow.of(mcuuid), ActionRow.of(mail))
-						.build();
-				event.replyModal(modal).queue();
+				if(hasActiveTicket(event.getUser().getIdLong())) {
+					event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+				}else {
+					TextInput mcuuid = TextInput.create("uuid", "Minecraft Name", TextInputStyle.SHORT)
+							.setPlaceholder("Your Minecraft Name")
+							.setRequiredRange(3, 16)
+							.build();
+					TextInput mail = TextInput.create("mail", "E-Mail", TextInputStyle.SHORT)
+							.setPlaceholder("Your E-Mail Adress")
+							.setRequiredRange(5, 48)
+							.build();
+					Modal modal = Modal.create("premsuppmodal", "Premium Support")
+							.addComponents(ActionRow.of(mcuuid), ActionRow.of(mail))
+							.build();
+					event.replyModal(modal).queue();
+				}
 			}
 		}else if(event.getComponentId().equals("repuser")) {
-			if(hasActiveTicket(event.getUser().getIdLong())) {
-				event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+			boolean isBanned = false;
+			String reason = "";
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT banReason FROM bot_s_ticketban WHERE bannedId = ?");
+				ps.setLong(1, event.getMember().getIdLong());
+				ResultSet rs = ps.executeQuery();
+				if(rs.next()) {
+					isBanned = true;
+					reason = rs.getString("banReason");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			if(isBanned) {
+				event.deferReply(true).addContent("You're banned from the ticket system for following reason: " + reason).queue();
 			}else {
-				TextInput uid = TextInput.create("uid", "UserID", TextInputStyle.SHORT)
-						.setPlaceholder("The UserID from the user")
-						.setRequiredRange(2, 32)
-						.build();
-				TextInput desc = TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH)
-						.setPlaceholder("A brief description what the user did.")
-						.setRequired(false)
-						.setRequiredRange(0, 256)
-						.build();
-				Modal modal = Modal.create("repusermodal", "Report a User")
-						.addComponents(ActionRow.of(uid), ActionRow.of(desc))
-						.build();
-				event.replyModal(modal).queue();
+				if(hasActiveTicket(event.getUser().getIdLong())) {
+					event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
+				}else {
+					TextInput uid = TextInput.create("uid", "UserID", TextInputStyle.SHORT)
+							.setPlaceholder("The UserID from the user")
+							.setRequiredRange(2, 32)
+							.build();
+					TextInput desc = TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH)
+							.setPlaceholder("A brief description what the user did.")
+							.setRequired(false)
+							.setRequiredRange(0, 256)
+							.build();
+					Modal modal = Modal.create("repusermodal", "Report a User")
+							.addComponents(ActionRow.of(uid), ActionRow.of(desc))
+							.build();
+					event.replyModal(modal).queue();
+				}
 			}
 		}else if(event.getComponentId().equals("closereason")) {
 			TextInput reason = TextInput.create("closereason", "Reason", TextInputStyle.SHORT)
@@ -283,7 +387,7 @@ public class TicketSCommands extends ListenerAdapter{
 					eb.addField("User Discord ID", uid, false);
 				}
 				eb.addField("Reason", event.getValue("reason").getAsString(), false);
-				chan.sendMessage("" + discMod.getAsMention()).queue(ra -> {
+				chan.sendMessage("" + discMod.getAsMention() + " " + member.getAsMention()).queue(ra -> {
 					ra.delete().queueAfter(10, TimeUnit.SECONDS);
 				});
 				chan.sendMessageEmbeds(eb.build()).addActionRow(
@@ -306,7 +410,7 @@ public class TicketSCommands extends ListenerAdapter{
 				eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
 				eb.addField("Minecraft Name", event.getValue("uuid").getAsString(), false);
 				eb.addField("E-Mail", event.getValue("mail").getAsString(), false);
-				chan.sendMessage("" + support.getAsMention()).queue(ra -> {
+				chan.sendMessage("" + support.getAsMention() + " " + member.getAsMention()).queue(ra -> {
 					ra.delete().queueAfter(10, TimeUnit.SECONDS);
 				});
 				chan.sendMessageEmbeds(eb.build()).addActionRow(
@@ -448,12 +552,12 @@ public class TicketSCommands extends ListenerAdapter{
 			User user = jda.getUserById(string.split(";-")[0]);
 			long timestamp = Long.parseLong(string.split(";-")[1]);
 			String msg = string.split(";-")[2];
-			SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
-			String date = sdf.format(new Date(timestamp));
+			//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
+			//String date = sdf.format(new Date(timestamp));
 			if(user != null) {
-				sb.append(date + " | " + user.getEffectiveName() + ": " + msg);
+				sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
 			}else {
-				sb.append(date + " | " + string.split(";-")[0] + ": " + msg);
+				sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
 			}
 			sb.append("\n");
 		}
@@ -470,6 +574,59 @@ public class TicketSCommands extends ListenerAdapter{
 		toReturn = sb.toString().substring(0, (sb.toString().length() - 2));
 		toReturn = TextCryptor.encrypt(toReturn, pass.toCharArray());
 		return toReturn;
+	}
+	
+	//If a user is already banned, true will be returned, otherwise false.
+	boolean addBan(long bannerId, long bannedId, String reason) {
+		boolean isBanned = false;
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_ticketban WHERE bannedId = ?");
+			ps.setLong(1, bannedId);
+			ResultSet rs = ps.executeQuery();
+			if(rs.next()) {
+				isBanned = true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		if(!isBanned) {
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("INSERT INTO bot_s_ticketban(bannerId,bannedAt,banReason,bannedId) VALUES (?,?,?,?)");
+				ps.setLong(1, bannerId);
+				ps.setLong(2, System.currentTimeMillis());
+				ps.setString(3, reason);
+				ps.setLong(4, bannedId);
+				ps.executeUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return isBanned;
+	}
+	
+	//if a user is already unbanned, true will be returned, otherwise false.
+	boolean removeBan(long bannedId) {
+		boolean isUnbanned = true;
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_ticketban WHERE bannedId = ?");
+			ps.setLong(1, bannedId);
+			ResultSet rs = ps.executeQuery();
+			if(rs.next()) {
+				isUnbanned = false;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		if(!isUnbanned) {
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("DELETE FROM bot_s_ticketban WHERE bannedId = ?");
+				ps.setLong(1, bannedId);
+				ps.executeUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return isUnbanned;
 	}
 	
 	public static void loadLastTicketId() {
