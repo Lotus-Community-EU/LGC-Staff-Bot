@@ -38,12 +38,12 @@ public class CommandAdder {
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					//Commands regarding the Suggestion System.
-					Commands.slash("setsuggestionboardchannel", "Sets the Suggestionboard Channel")
+					Commands.slash("setsuggestionboardchannel", "Sets the Suggestion Info Channel")
 					.setGuildOnly(true)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the message should be sent to")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
-					Commands.slash("setsuggestionmessagechannel", "Sets the Suggestion Info Channel")
+					Commands.slash("setsuggestionmessagechannel", "Sets the Suggestionboard Channel")
 					.setGuildOnly(true)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the message should be sent to")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
