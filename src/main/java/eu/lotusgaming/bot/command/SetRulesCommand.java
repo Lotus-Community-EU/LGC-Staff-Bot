@@ -24,7 +24,7 @@ public class SetRulesCommand extends ListenerAdapter{
 					ruleChannel.sendMessage(transform(ruleBlock2())).queue();
 					ruleChannel.sendMessage(transform(ruleBlock3())).queue();
 					ruleChannel.sendMessage(transform(ruleBlock4())).queue();
-					SimpleDateFormat time = new SimpleDateFormat("dd/MM/yyyy - HH:mm:ss");
+					SimpleDateFormat time = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
 			        String stime = time.format(new Date());
 					ruleChannel.sendMessage("**We wish you all a lot of fun and a nice stay in the Lotus Gaming Discord**\n*The Lotus Staff Team*\n \nRules has been updated last at: ***" + stime + "***").queue();
 				}else {
@@ -40,7 +40,7 @@ public class SetRulesCommand extends ListenerAdapter{
 		//rules.add("Read the rules in different languages: https://lotuscommunity.eu/");
 		rules.add("\n");
 		rules.add("## Section 1 - Following rulesets and policies apply");
-		rules.add("§1.1.) Discord Terms of Service & Community Guidelines");
+		rules.add("§1.1.) Discord [Terms of Service](<https://discord.com/terms>) & [Community Guidelines](<https://discord.com/guidelines>)");
 		//rules.add("§1.2.) Lotus Gaming Community Rules");
 		rules.add("\n");
 		return rules;
@@ -70,7 +70,7 @@ public class SetRulesCommand extends ListenerAdapter{
 		List<String> rules = new ArrayList<>();
 		rules.add("## Section 3 - Advertisments");
 		rules.add("<:green_dot:1207673798753648711> §3.1.) Advertising isn't allowed anywhere, including nicknames and unsolicited direct messages.");
-		rules.add("\n");
+		rules.add(" ");
 		rules.add("## Section 4 - Profile");
 		rules.add("<:rose_dot:1207673802327199744> §4.1.) Your profile must be appropiate, including nickname, avatar, banner, status, pronouns & about me.");
 		rules.add("<:rose_dot:1207673802327199744> §4.2.) You nickname must only consist of alphanumeric characters. Emojis are allowed when combined with alphanumeric characters.");
@@ -93,6 +93,7 @@ public class SetRulesCommand extends ListenerAdapter{
 		rules.add("<:red_dot:1207673800666255390> §5.4.) We reserve the right to revoke your access to our ticket system");
 		rules.add("<:red_dot:1207673800666255390> §5.5.) Management reserve the right to override the punishment ladder.");
 		rules.add("<:red_dot:1207673800666255390> §5.6.) You can contest any punishments you have received via the feedback system, selecting the Discord Punishments category when creating a ticket.");
+		rules.add("\n");
 		return rules;
 	}
 	
