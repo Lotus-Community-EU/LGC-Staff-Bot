@@ -19,6 +19,8 @@ public class ReadyClass extends ListenerAdapter{
 		CommandAdder.addCommands(event.getJDA());
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new InfoUpdater(event.getJDA()), 1000, 1000*60);
+		timer.scheduleAtFixedRate(new UserCounter(event.getJDA()), 1000, 1000*60);
+		timer.scheduleAtFixedRate(new Restarter(), 0, 1000);
 		InfoUpdater.setOnlineStatus(true);
 	}
 
