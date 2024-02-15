@@ -19,6 +19,7 @@ public class SetRulesCommand extends ListenerAdapter{
 			if(event.getOption("channel") != null) {
 				if(event.getOption("channel").getAsChannel().getType() == ChannelType.TEXT) {
 					TextChannel ruleChannel = event.getOption("channel").getAsChannel().asTextChannel();
+					event.reply("Rules are sent into " + ruleChannel.getAsMention()).queue();
 					ruleChannel.sendMessage(transform(ruleBlock1())).queue();
 					ruleChannel.sendMessage(transform(ruleBlock2())).queue();
 					ruleChannel.sendMessage(transform(ruleBlock3())).queue();
@@ -26,6 +27,8 @@ public class SetRulesCommand extends ListenerAdapter{
 					SimpleDateFormat time = new SimpleDateFormat("dd/MM/yyyy - HH:mm:ss");
 			        String stime = time.format(new Date());
 					ruleChannel.sendMessage("**We wish you all a lot of fun and a nice stay in the Lotus Gaming Discord**\n*The Lotus Staff Team*\n \nRules has been updated last at: ***" + stime + "***").queue();
+				}else {
+					event.deferReply(true).addContent("The Channel must be a text channel!").queue();
 				}
 			}
 		}
