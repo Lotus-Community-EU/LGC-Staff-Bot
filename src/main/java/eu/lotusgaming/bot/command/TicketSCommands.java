@@ -549,19 +549,25 @@ public class TicketSCommands extends ListenerAdapter{
 		input.remove(0);
 		StringBuilder sb = new StringBuilder();
 		for(String string : input) {
-			User user = jda.getUserById(string.split(";-")[0]);
-			long timestamp = Long.parseLong(string.split(";-")[1]);
-			String msg = string.split(";-")[2];
-			//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
-			//String date = sdf.format(new Date(timestamp));
-			if(user != null) {
-				sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
-			}else {
-				sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
+			if(string.split(";-").length == 3) {
+				User user = jda.getUserById(string.split(";-")[0]);
+				long timestamp = Long.parseLong(string.split(";-")[1]);
+				String msg = string.split(";-")[2];
+				//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
+				//String date = sdf.format(new Date(timestamp));
+				if(user != null) {
+					sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
+				}else {
+					sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
+				}
+				sb.append("\n");
 			}
-			sb.append("\n");
 		}
-		return sb.toString();
+		if(sb.toString().isBlank()) {
+			return "Error in Message History.";
+		}else {
+			return sb.toString();
+		}
 	}
 	
 	String translateIntoHashedMessage(List<String> input, String pass) {
