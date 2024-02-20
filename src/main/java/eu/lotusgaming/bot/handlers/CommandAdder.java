@@ -51,6 +51,11 @@ public class CommandAdder {
 					Commands.slash("setrules", "Sends the rules")
 					.setGuildOnly(true)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.slash("setinfo", "Sends the info")
+					.setGuildOnly(true)
+					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
 					).queue();
 		}
