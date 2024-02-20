@@ -73,7 +73,7 @@ public class SetRulesCommand extends ListenerAdapter{
 		rules.add(" ");
 		rules.add("## Section 4 - Profile");
 		rules.add("<:redarrow:1208890097039314955> §4.1.) Your profile must be appropiate, including nickname, avatar, banner, status, pronouns & about me.");
-		rules.add("<:redarrow:1208890097039314955> §4.2.) You nickname must only consist of alphanumeric characters. Emojis are allowed when combined with alphanumeric characters.");
+		rules.add("<:redarrow:1208890097039314955> §4.2.) Your nickname must only consist of alphanumeric characters. Emojis are allowed when combined with alphanumeric characters.");
 		rules.add("\n");
 		return rules;
 	}
@@ -82,12 +82,12 @@ public class SetRulesCommand extends ListenerAdapter{
 		List<String> rules = new ArrayList<>();
 		rules.add("## Section 5 - Punishments");
 		rules.add("<:redarrow:1208890097039314955> §5.1.) Punishments are structured as followed:");
-		rules.add("  - 2x verbal warnings");
-		rules.add("  - 2x logged warnings");
-		rules.add("  - 1 week timeout");
-		rules.add("  - 1 week ban");
-		rules.add("  - 4 week ban");
-		rules.add("  - consecutive bans are 90 days");
+		rules.add("- 2x verbal warnings");
+		rules.add("- 2x logged warnings");
+		rules.add("- 1 week timeout");
+		rules.add("- 1 week ban");
+		rules.add("- 4 week ban");
+		rules.add("- consecutive bans are 90 days");
 		rules.add("<:redarrow:1208890097039314955> §5.2.) Punishments that expired 12 month ago are ignored.");
 		rules.add("<:redarrow:1208890097039314955> §5.3.) Punishments carry across discord accounts.");
 		rules.add("<:redarrow:1208890097039314955> §5.4.) We reserve the right to revoke your access to our ticket system");
