@@ -244,10 +244,12 @@ public class TicketSCommands extends ListenerAdapter{
 				if(hasActiveTicket(event.getUser().getIdLong())) {
 					event.deferReply(true).addContent("You've already an active ticket. Finalise this first!").queue();
 				}else {
+					event.deferReply(true).addContent("The bot will ping you in your ticket channel.").queue();
 					Guild guild = event.getGuild();
 					Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
 					Member member = event.getMember();
 					guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
+						sendTicketLogCreated(nextTicketId, member, "General Support", chan, guild);
 						chan.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
 						chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: General Support").queue();
 						addTicketToDB(member.getIdLong(), chan.getIdLong(), "General Support");
@@ -351,6 +353,8 @@ public class TicketSCommands extends ListenerAdapter{
 		}else if(event.getComponentId().equals("closenoreason")) {
 			event.deferReply(true).addContent("Ticket will be closed in 5 seconds...").queue();
 			TextChannel channel = event.getChannel().asTextChannel();
+			String ticketId = channel.getName().substring(7);
+			sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), "Closed without reason.");
 			closeTicket(channel.getIdLong(), event.getMember().getIdLong(), "Ticket has been closed with no supplied reason.");
 			channel.delete().queueAfter(4, TimeUnit.SECONDS);
 		}
@@ -364,6 +368,7 @@ public class TicketSCommands extends ListenerAdapter{
 		if(event.getModalId().equals("repusermodal")) {
 			event.deferReply(true).queue();
 			guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
+				sendTicketLogCreated(nextTicketId, member, "Report a User", chan, guild);
 				chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: Report a User").queue();
 				addTicketToDB(member.getIdLong(), chan.getIdLong(), "Report a User");
 				Role discMod = guild.getRoleById(1201941339122716672l);
@@ -398,6 +403,7 @@ public class TicketSCommands extends ListenerAdapter{
 		}else if(event.getModalId().equals("premsuppmodal")) {
 			event.deferReply(true).queue();
 			guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
+				sendTicketLogCreated(nextTicketId, member, "Premium Support", chan, guild);
 				chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: Premium Support").queue();
 				addTicketToDB(member.getIdLong(), chan.getIdLong(), "Premium Support");
 				Role support = guild.getRoleById(1155573869827072022l);
@@ -421,6 +427,8 @@ public class TicketSCommands extends ListenerAdapter{
 		}else if(event.getModalId().equals("closeticketmodal")) {
 			TextChannel channel = event.getChannel().asTextChannel();
 			closeTicket(channel.getIdLong(), member.getIdLong(), event.getValue("closereason").getAsString());
+			String ticketId = channel.getName().substring(7);
+			sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), event.getValue("closereason").getAsString());
 			event.deferReply(true).addContent("Thank you, the ticket will be closed now.").queue();
 			channel.delete().queueAfter(5, TimeUnit.SECONDS);
 		}
@@ -460,6 +468,26 @@ public class TicketSCommands extends ListenerAdapter{
 			e.printStackTrace();
 		}
 		return hasTicket;
+	}
+	
+	void sendTicketLogCreated(long ticketId, Member creator, String topic, TextChannel ticketChannel, Guild guild) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(Color.green);
+		eb.setDescription("A new ticket has been created!\n"
+				+ "Creator: " + creator.getAsMention() + " / " + creator.getEffectiveName() + "\n"
+				+ "Channel: " + ticketChannel.getAsMention() + "\n"
+				+ "Ticket ID: " + ticketId + "\n"
+				+ "Topic: " + topic);
+		guild.getTextChannelById(1208894257289756705l).sendMessageEmbeds(eb.build()).queue();
+	}
+	
+	void sendTicketLogDeleted(Guild guild, String ticketId, Member closer, String reason) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(Color.red);
+		eb.setDescription("Ticket " + ticketId + " has been closed.\n"
+				+ "Closer: " + closer.getAsMention() + " / " + closer.getEffectiveName() + "\n"
+				+ "Reason: " + reason);
+		guild.getTextChannelById(1208894257289756705l).sendMessageEmbeds(eb.build()).queue();
 	}
 	
 	void closeTicket(long channelId, long closer, String reason) {
@@ -549,19 +577,25 @@ public class TicketSCommands extends ListenerAdapter{
 		input.remove(0);
 		StringBuilder sb = new StringBuilder();
 		for(String string : input) {
-			User user = jda.getUserById(string.split(";-")[0]);
-			long timestamp = Long.parseLong(string.split(";-")[1]);
-			String msg = string.split(";-")[2];
-			//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
-			//String date = sdf.format(new Date(timestamp));
-			if(user != null) {
-				sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
-			}else {
-				sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
+			if(string.split(";-").length == 3) {
+				User user = jda.getUserById(string.split(";-")[0]);
+				long timestamp = Long.parseLong(string.split(";-")[1]);
+				String msg = string.split(";-")[2];
+				//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
+				//String date = sdf.format(new Date(timestamp));
+				if(user != null) {
+					sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
+				}else {
+					sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
+				}
+				sb.append("\n");
 			}
-			sb.append("\n");
 		}
-		return sb.toString();
+		if(sb.toString().isBlank()) {
+			return "Error in Message History.";
+		}else {
+			return sb.toString();
+		}
 	}
 	
 	String translateIntoHashedMessage(List<String> input, String pass) {

@@ -44,7 +44,6 @@ public class InfoUpdater extends TimerTask{
 			ps.setInt(7, uniqueMembers.size());
 			ps.setString(8, "staffBot");
 			ps.executeUpdate();
-			Main.logger.info("InfoUpdater has been triggered.");
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
