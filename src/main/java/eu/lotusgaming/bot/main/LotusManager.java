@@ -4,10 +4,12 @@ import java.io.File;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
+import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.SetInfoCommand;
 import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
+import eu.lotusgaming.bot.handlers.AutomodHandler;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import net.dv8tion.jda.api.JDA;
 
@@ -63,6 +65,8 @@ public class LotusManager {
 		jda.addEventListener(new Welcomer());
 		jda.addEventListener(new SetRulesCommand());
 		jda.addEventListener(new SetInfoCommand());
+		jda.addEventListener(new PunishmentsCommands());
+		jda.addEventListener(new AutomodHandler());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 	}

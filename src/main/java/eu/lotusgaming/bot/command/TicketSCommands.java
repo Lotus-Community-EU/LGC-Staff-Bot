@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -223,6 +224,45 @@ public class TicketSCommands extends ListenerAdapter{
 	}
 	
 	@Override
+	public void onMessageContextInteraction(MessageContextInteractionEvent event) {
+		if(event.getName().equals("Start Ticket")) {
+			if(hasActiveTicket(event.getTarget().getAuthor().getIdLong())) {
+				event.deferReply(true).addContent("The User already has an active ticket.").queue();
+			}else {
+				Guild guild = event.getGuild();
+				Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
+				Member member = event.getMember();
+				if(guild.isMember(event.getTarget().getAuthor())) {
+					Member target = guild.getMember(event.getTarget().getAuthor());
+					guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(ra -> {
+						sendTicketLogCreated(ra.getIdLong(), member, "Context Menu Ticket", ra, guild);
+						ra.upsertPermissionOverride(target).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+						ra.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " for " + target.getEffectiveName() + " - Topic: Context Menu Ticket").queue();
+						addTicketToDB(member.getIdLong(), ra.getIdLong(), "Context Menu Ticket");
+						ra.sendTyping().queue();
+						EmbedBuilder eb = new EmbedBuilder();
+						eb.setDescription("You've opened a new ticket.\n"
+								+ "A staff member will be with you in touch shortly.");
+						eb.addField("Opened by:", member.getAsMention(), true);
+						eb.addField("Opened for:", target.getAsMention(), false);
+						eb.addField("Target Message", event.getTarget().getContentRaw(), false);
+						eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
+						eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
+						ra.sendMessage("" + member.getAsMention() + " " + target.getAsMention()).queue(ra1 -> {
+							ra1.delete().queueAfter(2, TimeUnit.SECONDS);
+						});
+						ra.sendMessageEmbeds(eb.build()).addActionRow(
+								Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+								).queue();
+					});
+				}else {
+					event.deferReply(true).addContent("The user is not present on this guild!").queue();
+				}
+			}
+		}
+	}
+	
+	@Override
 	public void onButtonInteraction(ButtonInteractionEvent event) {
 		if(event.getComponentId().equals("gensupp")) {
 			boolean isBanned = false;
@@ -261,7 +301,7 @@ public class TicketSCommands extends ListenerAdapter{
 						eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
 						eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
 						chan.sendMessage("" + member.getAsMention()).queue(ra -> {
-							ra.delete().queueAfter(10, TimeUnit.SECONDS);
+							ra.delete().queueAfter(2, TimeUnit.SECONDS);
 						});
 						chan.sendMessageEmbeds(eb.build()).addActionRow(
 								Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),

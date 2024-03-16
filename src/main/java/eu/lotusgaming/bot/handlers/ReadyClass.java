@@ -2,6 +2,7 @@ package eu.lotusgaming.bot.handlers;
 
 import java.util.Timer;
 
+import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import eu.lotusgaming.bot.main.LotusManager;
 import eu.lotusgaming.bot.main.Main;
@@ -16,6 +17,7 @@ public class ReadyClass extends ListenerAdapter{
 		LotusManager lm = new LotusManager();
 		lm.init(event.getJDA());
 		TicketSCommands.loadLastTicketId();
+		PunishmentsCommands.loadLastPunishmentId();
 		CommandAdder.addCommands(event.getJDA());
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new InfoUpdater(event.getJDA()), 1000, 1000*60);
