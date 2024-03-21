@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
-import eu.lotusgaming.bot.main.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
