@@ -229,6 +229,7 @@ public class TicketSCommands extends ListenerAdapter{
 			if(hasActiveTicket(event.getTarget().getAuthor().getIdLong())) {
 				event.deferReply(true).addContent("The User already has an active ticket.").queue();
 			}else {
+				event.deferReply(true).addContent("The ticket will be created...").queue();
 				Guild guild = event.getGuild();
 				Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
 				Member member = event.getMember();
@@ -245,7 +246,7 @@ public class TicketSCommands extends ListenerAdapter{
 								+ "A staff member will be with you in touch shortly.");
 						eb.addField("Opened by:", member.getAsMention(), true);
 						eb.addField("Opened for:", target.getAsMention(), false);
-						eb.addField("Target Message", event.getTarget().getContentRaw(), false);
+						eb.addField("Target Message", event.getTarget().getContentRaw() + "\nJump to message: " + event.getTarget().getJumpUrl(), false);
 						eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
 						eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
 						ra.sendMessage("" + member.getAsMention() + " " + target.getAsMention()).queue(ra1 -> {
