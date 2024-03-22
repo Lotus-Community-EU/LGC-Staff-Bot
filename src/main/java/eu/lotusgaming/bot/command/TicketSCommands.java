@@ -252,7 +252,7 @@ public class TicketSCommands extends ListenerAdapter{
 							ra1.delete().queueAfter(2, TimeUnit.SECONDS);
 						});
 						ra.sendMessageEmbeds(eb.build()).addActionRow(
-								Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+								Button.danger("closereasons", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
 								).queue();
 					});
 				}else {
@@ -397,6 +397,21 @@ public class TicketSCommands extends ListenerAdapter{
 			sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), "Closed without reason.");
 			closeTicket(channel.getIdLong(), event.getMember().getIdLong(), "Ticket has been closed with no supplied reason.");
 			channel.delete().queueAfter(4, TimeUnit.SECONDS);
+		}else if(event.getComponentId().equals("closereasons")) {
+			Member member = event.getMember();
+			if(member.hasPermission(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)) {
+				TextInput reason = TextInput.create("closereason", "Reason", TextInputStyle.SHORT)
+						.setPlaceholder("Reason")
+						.setValue("Ticket resolved.")
+						.setRequiredRange(10, 128)
+						.build();
+				Modal modal = Modal.create("closeticketmodal", "Close Ticket")
+						.addComponents(ActionRow.of(reason))
+						.build();
+				event.replyModal(modal).queue();
+			}else {
+				event.deferReply(true).addContent("You cannot close the Ticket!").queue();
+			}
 		}
 	}
 	
