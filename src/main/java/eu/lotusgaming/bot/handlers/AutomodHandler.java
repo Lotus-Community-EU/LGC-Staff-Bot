@@ -26,7 +26,7 @@ public class AutomodHandler extends ListenerAdapter {
 				Member member = event.getMember();
 				double messagePercentage = getAverageCaps(event.getMessage().getContentRaw());
 				if(guild.getIdLong() == publicGuild) {
-					if(messagePercentage >= 0.50) {
+					if(messagePercentage >= 0.75) {
 						EmbedBuilder eb = defaultEmbed(guild, "Caps", member);
 						DecimalFormat dF = new DecimalFormat("#.##");
 						eb.addField("Text", "Caps Percentage: " + dF.format(messagePercentage) + "% \n" + event.getMessage().getContentDisplay(), true);
