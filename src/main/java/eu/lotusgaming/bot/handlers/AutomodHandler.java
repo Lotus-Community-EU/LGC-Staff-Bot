@@ -54,17 +54,6 @@ public class AutomodHandler extends ListenerAdapter {
 							ra.delete().queueAfter(10, TimeUnit.SECONDS);
 						});
 					}
-				}else if(guild.getIdLong() == staffGuild){
-					if(messagePercentage >= 0.75) {
-						EmbedBuilder eb = defaultEmbed(guild, "Caps", member);
-						DecimalFormat dF = new DecimalFormat("#.##");
-						eb.addField("Text", "Caps Percentage: " + dF.format(messagePercentage) + "% \n" + event.getMessage().getContentDisplay(), true);
-						guild.getTextChannelById(staffModlog).sendMessageEmbeds(eb.build()).queue();
-						event.getMessage().delete().queue();
-						event.getChannel().sendMessage("Slow down with caps, " + member.getAsMention() + "!").queue(ra -> {
-							ra.delete().queueAfter(10, TimeUnit.SECONDS);
-						});
-					}
 				}
 			}
 		}
