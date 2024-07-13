@@ -31,7 +31,7 @@ public class AutomodHandler extends ListenerAdapter {
 						DecimalFormat dF = new DecimalFormat("#.##");
 						eb.addField("Text", "Caps Percentage: " + dF.format(messagePercentage) + "% \n" + event.getMessage().getContentDisplay(), true);
 						guild.getTextChannelById(publicModlog).sendMessageEmbeds(eb.build()).queue();
-						event.getMessage().delete().queue();
+						//event.getMessage().delete().queue();
 						event.getChannel().sendMessage("Slow down with caps, " + member.getAsMention() + "!").queue(ra -> {
 							ra.delete().queueAfter(10, TimeUnit.SECONDS);
 						});
@@ -40,7 +40,7 @@ public class AutomodHandler extends ListenerAdapter {
 						EmbedBuilder eb = defaultEmbed(guild, "Mass Mention", member);
 						eb.addField("Mentions", "Individual People mentioned: " + event.getMessage().getMentions().getMembers().size() + "\n" + event.getMessage().getContentRaw(), true);
 						guild.getTextChannelById(publicModlog).sendMessageEmbeds(eb.build()).queue();
-						event.getMessage().delete().queue();
+						//event.getMessage().delete().queue();
 						event.getChannel().sendMessage("Slow down with mentions, " + member.getAsMention() + "!").queue(ra -> {
 							ra.delete().queueAfter(10, TimeUnit.SECONDS);
 						});
@@ -49,7 +49,7 @@ public class AutomodHandler extends ListenerAdapter {
 						EmbedBuilder eb = defaultEmbed(guild, "Mass Mention", member);
 						eb.addField("Attachments", "Attachments count: " + event.getMessage().getAttachments().size() + "\n" + event.getMessage().getContentDisplay(), true);
 						guild.getTextChannelById(publicModlog).sendMessageEmbeds(eb.build()).queue();
-						event.getMessage().delete().queue();
+						//event.getMessage().delete().queue();
 						event.getChannel().sendMessage("Maximal 6 Attachments are per message permitted, " + member.getAsMention() + "!").queue(ra -> {
 							ra.delete().queueAfter(10, TimeUnit.SECONDS);
 						});
