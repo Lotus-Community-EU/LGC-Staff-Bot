@@ -50,7 +50,8 @@ public class SetRulesCommand extends ListenerAdapter{
 		List<String> rules = new ArrayList<>();
 		rules.add("## Section 2 - Content & Usage");
 		rules.add("<:redarrow:1208890097039314955> §2.1.) English is the only language permitted unless stated otherwise.");
-		rules.add("<:redarrow:1208890097039314955> §2.2.) Be respectful and polite to everyone - treat others how you would want to be treated.");
+		rules.add("<:redarrow:1208890097039314955> §2.2.1.) Be respectful and polite to everyone - treat others how you would want to be treated.");
+		rules.add("<:redarrow:1208890097039314955> §2.2.2.) Let other players finish speaking and don't interrupt them.");
 		rules.add("<:redarrow:1208890097039314955> §2.3.) Channels, threads & forums should only be used for their intended purpose.");
 		rules.add("<:redarrow:1208890097039314955> §2.4.) Channel descriptions consitute as part of the discord rules.");
 		rules.add("### Prohibited:");

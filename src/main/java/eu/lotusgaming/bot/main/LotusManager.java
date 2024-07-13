@@ -1,15 +1,20 @@
 package eu.lotusgaming.bot.main;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
+import eu.lotusgaming.bot.command.PunishmentsCommands;
+import eu.lotusgaming.bot.command.SayCommand;
 import eu.lotusgaming.bot.command.SetInfoCommand;
 import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDAInfo;
 
 public class LotusManager {
 	
@@ -63,14 +68,42 @@ public class LotusManager {
 		jda.addEventListener(new Welcomer());
 		jda.addEventListener(new SetRulesCommand());
 		jda.addEventListener(new SetInfoCommand());
+		jda.addEventListener(new PunishmentsCommands());
+		//jda.addEventListener(new AutomodHandler()); Deactivated until a proper system has been developed.
+		jda.addEventListener(new SayCommand());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
+		displayLogo(jda);
 	}
 	
 	public void postInit() {
 		long current = System.currentTimeMillis();
 		
 		Main.logger.info("Post-Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
+	}
+	
+	private void displayLogo(JDA jda) {
+		Main.logger.info("##################################################");
+		Main.logger.info("#                                                #");
+		Main.logger.info("#  ###              #########       #########    #");
+		Main.logger.info("#  ###             ###########     ###########   #");
+		Main.logger.info("#  ###            ###       ###   ###       ###  #");
+		Main.logger.info("#  ###            ###             ###            #");
+		Main.logger.info("#  ###            ###             ###            #");
+		Main.logger.info("#  ###            ###      #####  ###            #");
+		Main.logger.info("#  ###            ###      #####  ###            #");
+		Main.logger.info("#  ###            ###        ###  ###       ###  #");
+		Main.logger.info("#  #############   #############   ###########   #");
+		Main.logger.info("#  #############    ###########     #########    #");
+		Main.logger.info("#                                                #");
+		Main.logger.info("##################################################");
+		Main.logger.info("#                                                #");
+		Main.logger.info("#  Date: " + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + "                              #");
+		Main.logger.info("#  Time: " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "                                #");
+		Main.logger.info("#  Java Version: v" + System.getProperty("java.version") + "                        #");
+		Main.logger.info("#  JDA Version: v" + JDAInfo.VERSION + "                       #");
+		Main.logger.info("#                                                #");
+		Main.logger.info("##################################################");
 	}
 
 }

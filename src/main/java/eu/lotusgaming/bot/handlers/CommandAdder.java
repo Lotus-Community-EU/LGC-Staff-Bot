@@ -3,6 +3,7 @@ package eu.lotusgaming.bot.handlers;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.interactions.commands.Command.Type;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -28,6 +29,9 @@ public class CommandAdder {
 					.setGuildOnly(true)
 					.addOption(OptionType.INTEGER, "ticketid", "The ticket id to lookup")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.context(Type.MESSAGE, "Start Ticket")
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
 					
 					Commands.slash("ticketban", "Bans a user/id from using the ticket system")
 					.setGuildOnly(true)
@@ -56,7 +60,41 @@ public class CommandAdder {
 					Commands.slash("setinfo", "Sends the info")
 					.setGuildOnly(true)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
-					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.slash("kick", "Kicks a member")
+					.setGuildOnly(true)
+					.addOption(OptionType.USER, "user", "The user to kick", true)
+					.addOption(OptionType.STRING, "reason", "The reason why the user gets kicked", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.KICK_MEMBERS)),
+					
+					Commands.slash("ban", "Bans a member")
+					.setGuildOnly(true)
+					.addOption(OptionType.USER, "user", "The user to ban", true)
+					.addOption(OptionType.STRING, "reason", "The reason why the user gets banned", true)
+					.addOption(OptionType.INTEGER, "time", "Time for the ban's persistiency (0 for Permanent)", true)
+					.addOption(OptionType.STRING, "timeunit", "Time Unit for the ban (seconds, minutes, hours, days)", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS)),
+					
+					Commands.slash("warn", "Warns a member")
+					.setGuildOnly(true)
+					.addOption(OptionType.USER, "user", "The user to warn", true)
+					.addOption(OptionType.STRING, "reason", "The reason why the user gets warned", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
+					
+					Commands.slash("mute", "Mutes a member (Utilising timeout)")
+					.setGuildOnly(true)
+					.addOption(OptionType.USER, "user", "The user to mute", true)
+					.addOption(OptionType.STRING, "reason", "The reason why the user got muted", true)
+					.addOption(OptionType.INTEGER, "time", "Time for the ban's persistiency (0 for Permanent)", true)
+					.addOption(OptionType.STRING, "timeunit", "Time Unit for the ban (seconds, minutes, hours, days)", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
+					
+					Commands.slash("say", "Let the bot talk")
+					.setGuildOnly(true)
+					.addOption(OptionType.CHANNEL, "targetchannel", "The Channel the bot should write in", true)
+					.addOption(OptionType.STRING, "text", "The text the bot should write", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.MANAGE_CHANNEL, Permission.MANAGE_SERVER))
 					).queue();
 		}
 	}

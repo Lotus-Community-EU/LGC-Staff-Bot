@@ -158,6 +158,7 @@
                 </executions>
             </plugin>
         </plugins>
+        <finalName>lgc-staffbot</finalName>
     </build>
 
 </project>
