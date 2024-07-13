@@ -88,7 +88,13 @@ public class CommandAdder {
 					.addOption(OptionType.STRING, "reason", "The reason why the user got muted", true)
 					.addOption(OptionType.INTEGER, "time", "Time for the ban's persistiency (0 for Permanent)", true)
 					.addOption(OptionType.STRING, "timeunit", "Time Unit for the ban (seconds, minutes, hours, days)", true)
-					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS))
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
+					
+					Commands.slash("say", "Let the bot talk")
+					.setGuildOnly(true)
+					.addOption(OptionType.CHANNEL, "targetchannel", "The Channel the bot should write in", true)
+					.addOption(OptionType.STRING, "text", "The text the bot should write", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.MANAGE_CHANNEL, Permission.MANAGE_SERVER))
 					).queue();
 		}
 	}
