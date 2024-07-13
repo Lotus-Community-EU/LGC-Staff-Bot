@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,10 +32,12 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
@@ -42,6 +45,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 public class TicketSCommands extends ListenerAdapter{
 	
 	static int nextTicketId = 0;
+	static HashMap<Member, Boolean> hm_ticketclose = new HashMap<>();
 	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -306,7 +310,8 @@ public class TicketSCommands extends ListenerAdapter{
 						});
 						chan.sendMessageEmbeds(eb.build()).addActionRow(
 								Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
-								Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+								Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512")),
+								Button.danger("closerate", "Rate and Close").withEmoji(Emoji.fromFormatted("U+1F522"))
 								).queue();
 					});
 				}
@@ -413,6 +418,38 @@ public class TicketSCommands extends ListenerAdapter{
 			}else {
 				event.deferReply(true).addContent("You cannot close the Ticket!").queue();
 			}
+		}else if(event.getComponentId().equals("closerate")) {
+			event.reply("Rate the overall quality of this ticket.").addActionRow(
+				StringSelectMenu.create("ticketratemenu")
+				.addOption("Excellent", "1")
+				.addOption("Very Good", "2")
+				.addOption("Good", "3")
+				.addOption("Neutral", "4")
+				.addOption("Bad", "5")
+				.addOption("Very Bad", "6")
+				.build()
+			).queue();
+		}
+	}
+	
+	@Override
+	public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+		if(event.getComponentId().equals("ticketratemenu")) {
+			String val = event.getValues().get(0);
+			TextInput rate = TextInput.create("ratetext", "Description", TextInputStyle.PARAGRAPH)
+					.setPlaceholder("Rate your ticket thoroughly. Optional")
+					.setRequiredRange(0, 2000)
+					.setRequired(false)
+					.build();
+			TextInput closeReason = TextInput.create("closereason", "Reason for Ticket Closure", TextInputStyle.PARAGRAPH)
+					.setValue("Ticket has been Resolved.")
+					.setRequiredRange(0, 1000)
+					.build();
+			Modal modal = Modal.create("ratemodal", "Rate the Ticket")
+					.addComponents(ActionRow.of(rate), ActionRow.of(closeReason))
+					.build();
+			addRateToTicket(event.getChannelIdLong(), val);
+			event.replyModal(modal).queue();
 		}
 	}
 	
@@ -453,11 +490,12 @@ public class TicketSCommands extends ListenerAdapter{
 				});
 				chan.sendMessageEmbeds(eb.build()).addActionRow(
 						Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
-						Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+						Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512")),
+						Button.danger("closerate", "Rate and Close").withEmoji(Emoji.fromFormatted("U+1F522"))
 						).queue();
 			});
 		}else if(event.getModalId().equals("premsuppmodal")) {
-			event.deferReply(true).queue();
+			event.deferReply(true).addContent("A ticket will be opened").queue();
 			guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
 				sendTicketLogCreated(nextTicketId, member, "Premium Support", chan, guild);
 				chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: Premium Support").queue();
@@ -477,10 +515,20 @@ public class TicketSCommands extends ListenerAdapter{
 				});
 				chan.sendMessageEmbeds(eb.build()).addActionRow(
 						Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
-						Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512"))
+						Button.danger("closereason", "Close with Reason").withEmoji(Emoji.fromFormatted("U+1F512")),
+						Button.danger("closerate", "Rate and Close").withEmoji(Emoji.fromFormatted("U+1F522"))
 						).queue();
 			});
 		}else if(event.getModalId().equals("closeticketmodal")) {
+			TextChannel channel = event.getChannel().asTextChannel();
+			closeTicket(channel.getIdLong(), member.getIdLong(), event.getValue("closereason").getAsString());
+			String ticketId = channel.getName().substring(7);
+			sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), event.getValue("closereason").getAsString());
+			event.deferReply(true).addContent("Thank you, the ticket will be closed now.").queue();
+			channel.delete().queueAfter(5, TimeUnit.SECONDS);
+		}else if(event.getModalId().equals("ratemodal")) {
+			String reason = event.getValue("ratetext").getAsString();
+			addTextRateToTicket(event.getChannelIdLong(), reason);
 			TextChannel channel = event.getChannel().asTextChannel();
 			closeTicket(channel.getIdLong(), member.getIdLong(), event.getValue("closereason").getAsString());
 			String ticketId = channel.getName().substring(7);
@@ -599,6 +647,29 @@ public class TicketSCommands extends ListenerAdapter{
 			ps.setString(1, newMessage);
 			ps.setLong(2, System.currentTimeMillis());
 			ps.setLong(3, channelId);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	void addRateToTicket(long channelId, String rating) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_s_tickets SET rating = ? WHERE channelId = ?");
+			ps.setInt(1, Integer.valueOf(rating));
+			ps.setLong(2, channelId);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	void addTextRateToTicket(long channelId, String rating) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_s_tickets SET rateText = ? WHERE channelId = ?");
+			ps.setString(1, rating);
+			ps.setLong(2, channelId);
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
