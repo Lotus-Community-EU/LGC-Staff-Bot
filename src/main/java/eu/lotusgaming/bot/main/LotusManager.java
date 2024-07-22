@@ -13,6 +13,7 @@ import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import eu.lotusgaming.bot.handlers.Welcomer;
+import eu.lotusgaming.bot.handlers.modlog.ModlogController;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDAInfo;
 
@@ -71,6 +72,7 @@ public class LotusManager {
 		jda.addEventListener(new PunishmentsCommands());
 		//jda.addEventListener(new AutomodHandler()); Deactivated until a proper system has been developed.
 		jda.addEventListener(new SayCommand());
+		ModlogController.registerClasses(jda);
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
