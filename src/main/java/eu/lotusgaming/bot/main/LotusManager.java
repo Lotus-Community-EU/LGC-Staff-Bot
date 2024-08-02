@@ -14,6 +14,7 @@ import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
+import eu.lotusgaming.bot.misc.MySQL;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDAInfo;
 
@@ -85,27 +86,32 @@ public class LotusManager {
 	}
 	
 	private void displayLogo(JDA jda) {
-		Main.logger.info("##################################################");
-		Main.logger.info("#                                                #");
-		Main.logger.info("#  ###              #########       #########    #");
-		Main.logger.info("#  ###             ###########     ###########   #");
-		Main.logger.info("#  ###            ###       ###   ###       ###  #");
-		Main.logger.info("#  ###            ###             ###            #");
-		Main.logger.info("#  ###            ###             ###            #");
-		Main.logger.info("#  ###            ###      #####  ###            #");
-		Main.logger.info("#  ###            ###      #####  ###            #");
-		Main.logger.info("#  ###            ###        ###  ###       ###  #");
-		Main.logger.info("#  #############   #############   ###########   #");
-		Main.logger.info("#  #############    ###########     #########    #");
-		Main.logger.info("#                                                #");
-		Main.logger.info("##################################################");
-		Main.logger.info("#                                                #");
-		Main.logger.info("#  Date: " + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + "                              #");
-		Main.logger.info("#  Time: " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "                                #");
-		Main.logger.info("#  Java Version: v" + System.getProperty("java.version") + "                        #");
-		Main.logger.info("#  JDA Version: v" + JDAInfo.VERSION + "                       #");
-		Main.logger.info("#                                                #");
-		Main.logger.info("##################################################");
+		System.out.println("##################################################");
+		System.out.println("#                                                #");
+		System.out.println("#  ###              #########       #########    #");
+		System.out.println("#  ###             ###########     ###########   #");
+		System.out.println("#  ###            ###       ###   ###       ###  #");
+		System.out.println("#  ###            ###             ###            #");
+		System.out.println("#  ###            ###             ###            #");
+		System.out.println("#  ###            ###      #####  ###            #");
+		System.out.println("#  ###            ###      #####  ###            #");
+		System.out.println("#  ###            ###        ###  ###       ###  #");
+		System.out.println("#  #############   #############   ###########   #");
+		System.out.println("#  #############    ###########     #########    #");
+		System.out.println("#                                                #");
+		System.out.println("##################################################");
+		System.out.println("#                                                #");
+		System.out.println("#  Date: " + new SimpleDateFormat("dd.MM.yyyy").format(new Date()) + "                              #");
+		System.out.println("#  Time: " + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "                                #");
+		System.out.println("#  Java Version: v" + System.getProperty("java.version") + "                        #");
+		System.out.println("#  JDA Version: v" + JDAInfo.VERSION_MAJOR + "." + JDAInfo.VERSION_MINOR + "." + JDAInfo.VERSION_REVISION + "                           #");
+		if(MySQL.isConnected()) {
+			System.out.println("#  MySQL Connected: yes                          #");
+		}else {
+			System.out.println("#  MySQL Connected: no                           #");
+		}
+		System.out.println("#                                                #");
+		System.out.println("##################################################");
 	}
 
 }
