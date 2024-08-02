@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
 import eu.lotusgaming.bot.main.LotusManager;
+import eu.lotusgaming.bot.main.Main;
 import eu.lotusgaming.bot.misc.MySQL;
 import eu.lotusgaming.bot.misc.TextCryptor;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -18,6 +20,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
@@ -92,6 +95,15 @@ public class MessageLogging extends ListenerAdapter {
 			}
 			ModlogController.sendMessage(eb, guild);
 			markMessageAsDeleted(guild.getIdLong(), event.getMessageIdLong());
+		}
+	}
+	
+	@Override
+	public void onMessageBulkDelete(MessageBulkDeleteEvent event) {
+		Guild guild = event.getGuild();
+		List<String> messageIds = event.getMessageIds();
+		for(String string : messageIds) {
+			Main.logger.info("BULKDELETE: " + string);
 		}
 	}
 	
