@@ -35,7 +35,13 @@ public class MySQL {
 	}
 	
 	public static Connection getConnection() {
-		return con;
+		if(isConnected()) {
+			return con;
+		}else {
+			try { con.prepareStatement("SELECT * FROM core_ranks"); } catch (SQLException e) { }
+			return con;
+		}
+		
 	}
 
 }
