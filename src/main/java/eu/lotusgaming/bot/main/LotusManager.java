@@ -7,6 +7,7 @@ import java.util.Date;
 import org.simpleyaml.configuration.file.YamlFile;
 
 import eu.lotusgaming.bot.command.PunishmentsCommands;
+import eu.lotusgaming.bot.command.PurgeCommand;
 import eu.lotusgaming.bot.command.SayCommand;
 import eu.lotusgaming.bot.command.SetInfoCommand;
 import eu.lotusgaming.bot.command.SetRulesCommand;
@@ -25,6 +26,7 @@ public class LotusManager {
 	public static String mainConfigName = "botconfig.yml";
 	public static File mainConfig = new File(configFolderName + "/" + mainConfigName);
 	private static File logFolder = new File(configFolderName + "/logs");
+	public static File tmpFolder = new File(configFolderName + "/tmp");
 	
 	//must be initialized before bot startup!
 	public void preInit() {
@@ -39,6 +41,7 @@ public class LotusManager {
 		if(!mainConfig.exists()) {
 			try { mainConfig.createNewFile(); } catch (Exception ex) {}
 		}
+		if(!tmpFolder.exists()) tmpFolder.mkdir();
 		
 		try {
 			YamlFile cfg = YamlFile.loadConfiguration(mainConfig);
@@ -74,6 +77,7 @@ public class LotusManager {
 		//jda.addEventListener(new AutomodHandler()); Deactivated until a proper system has been developed.
 		jda.addEventListener(new SayCommand());
 		ModlogController.registerClasses(jda);
+		jda.addEventListener(new PurgeCommand());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
