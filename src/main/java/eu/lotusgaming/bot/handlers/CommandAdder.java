@@ -94,7 +94,13 @@ public class CommandAdder {
 					.setGuildOnly(true)
 					.addOption(OptionType.CHANNEL, "targetchannel", "The Channel the bot should write in", true)
 					.addOption(OptionType.STRING, "text", "The text the bot should write", true)
-					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.MANAGE_CHANNEL, Permission.MANAGE_SERVER))
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.MANAGE_CHANNEL, Permission.MANAGE_SERVER)),
+					
+					Commands.slash("purge", "Purge messages from in this channel.")
+					.setGuildOnly(true)
+					.addOption(OptionType.INTEGER, "messages", "The count of messages to be deleted (max 100)", true)
+					.addOption(OptionType.USER, "member", "Only delete the messages from this user (optional)")
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.MESSAGE_MANAGE, Permission.MANAGE_SERVER))
 					).queue();
 		}
 	}
