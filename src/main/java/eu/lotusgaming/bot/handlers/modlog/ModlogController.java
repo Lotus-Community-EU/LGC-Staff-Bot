@@ -9,6 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Timer;
 
+import eu.lotusgaming.bot.handlers.modlog.category.EmojiStickerEvent;
 import eu.lotusgaming.bot.handlers.modlog.category.GuildEvents;
 import eu.lotusgaming.bot.handlers.modlog.category.MessageLogging;
 import eu.lotusgaming.bot.handlers.modlog.category.RoleEvents;
@@ -35,6 +36,7 @@ public class ModlogController {
 		jda.addEventListener(new GuildEvents());
 		jda.addEventListener(new MessageLogging());
 		jda.addEventListener(new RoleEvents());
+		jda.addEventListener(new EmojiStickerEvent());
 	}
 	
 	public static String odtToString(OffsetDateTime odt, String pattern) {
