@@ -293,9 +293,11 @@ public class TicketSCommands extends ListenerAdapter{
 					Guild guild = event.getGuild();
 					Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
 					Member member = event.getMember();
+					Role support = guild.getRoleById(1155573869827072022l);
 					guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
 						sendTicketLogCreated(nextTicketId, member, "General Support", chan, guild);
 						chan.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+						chan.upsertPermissionOverride(support).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
 						chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: General Support").queue();
 						addTicketToDB(member.getIdLong(), chan.getIdLong(), "General Support");
 						chan.sendTyping().queue();
@@ -306,7 +308,7 @@ public class TicketSCommands extends ListenerAdapter{
 						eb.addField("Need support in your language?", "Add a reaction with your countries flag and we'll try to answer in that language.", false);
 						eb.addField("Rules", "We'll try to offer support as good as we can, however don't mention anyone from our staff team. We'll get to you as soon as we can!", false);
 						chan.sendMessage("" + member.getAsMention()).queue(ra -> {
-							ra.delete().queueAfter(2, TimeUnit.SECONDS);
+							ra.delete().queueAfter(5, TimeUnit.SECONDS);
 						});
 						chan.sendMessageEmbeds(eb.build()).addActionRow(
 								Button.danger("closenoreason", "Close").withEmoji(Emoji.fromFormatted("U+1F512")),
@@ -459,12 +461,14 @@ public class TicketSCommands extends ListenerAdapter{
 		Category ticketsCategory = guild.getCategoryById(1203709412460470398l);
 		Member member = event.getMember();
 		if(event.getModalId().equals("repusermodal")) {
-			event.deferReply(true).queue();
+			event.deferReply(true).addContent("A ticket will be opened and you'll be pinged in your channel.").queue();
 			guild.createTextChannel("ticket-" + nextTicketId, ticketsCategory).queue(chan -> {
 				sendTicketLogCreated(nextTicketId, member, "Report a User", chan, guild);
 				chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: Report a User").queue();
 				addTicketToDB(member.getIdLong(), chan.getIdLong(), "Report a User");
 				Role discMod = guild.getRoleById(1201941339122716672l);
+				chan.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+				chan.upsertPermissionOverride(discMod).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
 				String uid = event.getValue("uid").getAsString();
 				long id = 0;
 				if(uid.matches("[0-9]+$")) {
@@ -501,6 +505,8 @@ public class TicketSCommands extends ListenerAdapter{
 				chan.getManager().setTopic("Ticket #" + nextTicketId + " created by " + member.getEffectiveName() + " - Topic: Premium Support").queue();
 				addTicketToDB(member.getIdLong(), chan.getIdLong(), "Premium Support");
 				Role support = guild.getRoleById(1155573869827072022l);
+				chan.upsertPermissionOverride(member).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+				chan.upsertPermissionOverride(support).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
 				chan.sendTyping().queue();
 				EmbedBuilder eb = new EmbedBuilder();
 				eb.setDescription("You've opened a new ticket.\n"
