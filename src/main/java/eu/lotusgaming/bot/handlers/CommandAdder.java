@@ -110,7 +110,13 @@ public class CommandAdder {
 					Commands.slash("set-activity", "Modify the activity status for the bot")
 					.setGuildOnly(false)
 					.addOption(OptionType.STRING, "option", "Choose what kind of activity the bot should display", true, true)
-					.addOption(OptionType.STRING, "text", "The text followed up", true)
+					.addOption(OptionType.STRING, "text", "The text followed up", true),
+					
+					Commands.slash("leaderboard", "See the Top 10 of Chatters in this Discord Guild.")
+					.addOption(OptionType.INTEGER, "top", "Override how many Entries you'd like to see. Up to 25 possible."),
+					
+					Commands.slash("level", "See your or someone else's current Level")
+					.addOption(OptionType.USER, "member", "The member to lookup.")
 					).queue();
 		}
 	}

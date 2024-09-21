@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
+import eu.lotusgaming.bot.command.LevelSystem;
 import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.PurgeCommand;
 import eu.lotusgaming.bot.command.SayCommand;
@@ -96,6 +97,7 @@ public class LotusManager {
 		ModlogController.registerClasses(jda);
 		jda.addEventListener(new PurgeCommand());
 		jda.addEventListener(new StatusActivityCommand());
+		jda.addEventListener(new LevelSystem());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
