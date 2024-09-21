@@ -70,7 +70,9 @@ public class MessageLogging extends ListenerAdapter {
 			}else {
 				eb.addField("New Message:", event.getMessage().getContentDisplay() + " ", false);
 			}
-			ModlogController.sendMessage(eb, guild);
+			if(!event.getMessage().getContentDisplay().equalsIgnoreCase(lastUpdatedText)) {
+				ModlogController.sendMessage(eb, guild);
+			}
 		}
 	}
 	
