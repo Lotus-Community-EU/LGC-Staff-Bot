@@ -87,7 +87,6 @@ public class DatabaseMessageTimer extends TimerTask{
 				PreparedStatement ps = MySQL.getConnection().prepareStatement("DELETE FROM bot_s_messagelog WHERE id = ?");
 				ps.setLong(1, id);
 				ps.executeUpdate();
-				Main.logger.info("Removed ID " + id);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}

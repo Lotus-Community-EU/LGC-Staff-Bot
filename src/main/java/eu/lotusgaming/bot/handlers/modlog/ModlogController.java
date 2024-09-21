@@ -71,7 +71,6 @@ public class ModlogController {
 	
 	public static EmbedBuilder baseEmbed(Guild guild) {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setAuthor("Beta - Errors may appear!");
 		eb.setFooter(guild.getName() + " ● " + dateToString(new Date(), "dd.MM.yy - HH:mm"), guild.getIconUrl());
 		return eb;
 	}
