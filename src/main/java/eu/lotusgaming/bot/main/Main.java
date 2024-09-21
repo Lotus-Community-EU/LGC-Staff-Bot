@@ -57,8 +57,28 @@ public class Main {
 		builder.enableCache(CacheFlag.ACTIVITY, CacheFlag.CLIENT_STATUS, CacheFlag.EMOJI, CacheFlag.FORUM_TAGS, CacheFlag.ONLINE_STATUS, CacheFlag.SCHEDULED_EVENTS, CacheFlag.VOICE_STATE);
 		builder.setMemberCachePolicy(MemberCachePolicy.ALL);
 		builder.addEventListeners(new ReadyClass());
-		builder.setActivity(Activity.watching("my capabilities grow."));
-		builder.setStatus(OnlineStatus.IDLE);
+		
+		//activity / status handle
+		String value = cfg.getString("Bot.Activity.Onlinestatus");
+		OnlineStatus status = null;
+		switch(value) {
+		case "OFFLINE": status = OnlineStatus.OFFLINE; break;
+		case "ONLINE": status = OnlineStatus.ONLINE; break;
+		case "IDLE": status = OnlineStatus.IDLE; break;
+		case "DONOTDISTURB": status = OnlineStatus.DO_NOT_DISTURB; break;
+		default: status = OnlineStatus.ONLINE; break;
+		}
+		builder.setStatus(status);
+		
+		String activityValue = cfg.getString("Bot.Activity.Type");
+		String textValue = cfg.getString("Bot.Activity.Text");
+		Activity activity = null;
+		switch(activityValue) {
+		case "PLAYING": activity = Activity.playing(textValue); break;
+		case "LISTENING": activity = Activity.listening(textValue); break;
+		case "WATCHING": activity = Activity.watching(textValue); break;
+		}
+		builder.setActivity(activity);
 		builder.build();
 	}
 	
