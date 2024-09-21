@@ -1,7 +1,11 @@
 package eu.lotusgaming.bot.command;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,11 +14,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.simpleyaml.configuration.file.YamlFile;
 
+import eu.lotusgaming.bot.handlers.modlog.ModlogController;
 import eu.lotusgaming.bot.main.LotusManager;
+import eu.lotusgaming.bot.main.Main;
 import eu.lotusgaming.bot.misc.MySQL;
 import eu.lotusgaming.bot.misc.TextCryptor;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -122,6 +131,7 @@ public class TicketSCommands extends ListenerAdapter{
 			long closedById = 0;
 			String closeReason = "";
 			String msgHistory = "";
+			int rating = 0;
 			try {
 				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_tickets WHERE id = ?");
 				ps.setInt(1, ticketId);
@@ -135,6 +145,7 @@ public class TicketSCommands extends ListenerAdapter{
 						closedById = rs.getLong("closedBy");
 						closeReason = rs.getString("closeReason");
 						msgHistory = rs.getString("msg_history");
+						rating = rs.getInt("rating");
 					}else {
 						event.getHook().sendMessage("Hey, it seems that this ticket is still in progress.").queue();
 						return;
@@ -152,31 +163,13 @@ public class TicketSCommands extends ListenerAdapter{
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			Member creator = guild.getMemberById(creatorId);
-			Member closer = guild.getMemberById(closedById);
-			String history = translateListIntoProperSentences(translateIntoHumanReadableMessages(msgHistory, cfg.getString("Bot.HashPassword")), event.getJDA());
-			SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
-			String created = sdf.format(new Date(createdAt));
-			String closed = sdf.format(new Date(closedAt));
-			
+			List<String> history = translateIntoHumanReadableMessages(msgHistory, cfg.getString("Bot.HashPassword"));
+			int pin = randomPin(1000, 9999);
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setColor(event.getMember().getColor());
-			eb.setTitle("Ticket Transcription");
-			if(creator != null) {
-				eb.addField("Ticket created", "by: " + creator.getAsMention() + "\nat: " + created, true);
-			}else {
-				eb.addField("Ticket created", "by: " + creatorId + "\nat: " + created, true);
-			}
-			if(closer != null) {
-				eb.addField("Ticket closed", "by: " + closer.getAsMention() + "\nwith Reason: " + closeReason + "\nat: " + closed, false);
-			}else {
-				eb.addField("Ticket closed", "by: " + closedById + "\nwith Reason: " + closeReason + "\nat: " + closed, false);
-			}
-			eb.addField("Topic", topic, false);
-			if(history.length() >= 1023) {
-				history = history.substring(0, 1023);
-			}
-			eb.addField("Message History", history, false);
+			eb.setTitle("Look Up Ticket here", "http://tickets.lotusgaming.eu/ticket-" + ticketId + ".html");
+			eb.setDescription("Pin: " + pin);
+			generateChatHTMLDocument(pin, event.getJDA(), guild, creatorId, closedById, createdAt, closedAt, topic, closeReason, history, rating, ticketId);
 			event.getHook().sendMessageEmbeds(eb.build()).queue();
 		}else if(event.getName().equals("ticketban")) {
 			event.deferReply().queue();
@@ -809,5 +802,220 @@ public class TicketSCommands extends ListenerAdapter{
 			e.printStackTrace();
 		}
 	}
-
+	
+	void generateChatHTMLDocument(int pin, JDA jda, Guild guild, long ticketCreator, long ticketCloser, long createdAt, long closedAt, String topic, String closedReason, List<String> messagesAndAuthors, int rating, int ticketid) {
+		messagesAndAuthors.remove(0);
+		StringBuilder html = new StringBuilder();
+        
+        html.append("<!DOCTYPE html>\n");
+        html.append("<html lang=\"en\">\n");
+        html.append("<head>\n");
+        html.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n");
+        html.append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n");
+        html.append("<link href=\"https://fonts.googleapis.com/css2?family=Handjet:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap\" rel=\"stylesheet\">\n");
+        html.append("<meta charset=\"UTF-8\">\n");
+        html.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+        html.append("<style>\n");
+        html.append("body { font-family: \"Roboto\", sans-serif; font-weight: 400; font-style: normal; background-color: #404040;}\n");
+        html.append(".chat-container { margin: 20px auto; width: 50%; border: 1px solid #ccc; padding: 10px; border-radius: 10px; }\n");
+        html.append(".info-container { margin: 20px auto; width: 50%; border: 1px solid #ccc; padding: 10px; border-radius: 10px; }\n");
+        html.append(".message { display: flex; align-items: center; margin-bottom: 15px; color: #ffffff; }\n");
+        html.append(".avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ccc; margin-right: 10px; }\n");
+        html.append(".content { display: flex; flex-direction: column; }\n");
+        html.append(".user { font-weight: bold; color: #b3d9ff; }\n");
+        html.append(".timestamp { font-size: 0.8em; color: #fff; margin-left: 5px; }\n");
+        html.append(".text { margin-left: 10px; color: #ffffff;}\n");
+        html.append(".info-pre { color: #29a329; }\n");
+        html.append(".info-post { margin-left: 5px; color: #ffffff; }\n");
+        html.append(".title { text-align: center; color: #ffffff;}\n");
+        html.append("footer { background-color: #505050; color: white; padding: 20px 0; text-align: center; bottom: 0; width: 99vw; font-size: 16px; }\n");
+        html.append(".footer-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; }\n");
+        html.append(".social-icons { margin: 20px 0; }\n");
+        html.append(".social-icons a { margin: 0 10px; color: #fff; text-decoration: none; font-size: 24px; }\n");
+        html.append(".social-icons a:hover { color: #000; }\n");
+        html.append(".copyright { margin-top: 10px; font-size: 14px; }\n");
+        html.append("</style>\n");
+        html.append("<h1 class=\"title\">" + guild.getName() + " Ticket History</h1>\n");
+        html.append("<title>LGC Support Ticket History</title>\n");
+        html.append("<div class=\"info-container\">\n");
+        html.append("<span class=\"info-pre\">Creator:</span>\n");
+        User creator = jda.getUserById(ticketCreator);
+        if(creator == null) {
+        	html.append("<span class=\"info-post\">User not found / " + ticketCreator + "</span>\n");
+        }else {
+        	html.append("<span class=\"info-post\">" + creator.getName() + "</span>\n");
+        }
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Created at:</span>\n");
+        html.append("<span class=\"info-post\">" + dateTranslator("" + createdAt) + "</span>\n");
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Closed by:</span>\n");
+        User closer = jda.getUserById(ticketCloser);
+        if(closer == null) {
+        	html.append("<span class=\"info-post\">User not found / " + ticketCloser + "</span>\n");
+        }else {
+        	html.append("<span class=\"info-post\">" + closer.getName() + "</span>\n");
+        }
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Closed at:</span>\n");
+        html.append("<span class=\"info-post\">" + dateTranslator("" + closedAt) + "</span>\n");
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Close Reason:</span>\n");
+        html.append("<span class=\"info-post\">" + closedReason + "</span>\n");
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Ticket ID:</span>\n");
+        html.append("<span class=\"info-post\">" + ticketid + "</span>\n");
+        html.append("<br>\n");
+        html.append("<span class=\"info-pre\">Rating</span>\n");
+        html.append("<span class=\"info-post\">" + rating + " / 6</span>\n");
+        html.append("</div>\n");
+        html.append("</head>\n");
+        html.append("<body>\n");
+        html.append("<script>\n");
+        html.append("var password = \"" + pin + "\";\n");
+        html.append("(function passcodeprotect() {\n");
+        html.append("var passcode = prompt(\"Enter Password:\");\n");
+        html.append("while(passcode !== password) {\n");
+        html.append("alert(\"Incorrect Password!\");\n");
+        html.append("return passcodeprotect();\n");
+        html.append("}\n");
+        html.append("}());\n");
+        html.append("</script>\n");
+        html.append("<div class=\"chat-container\">\n");
+        for(String entry : messagesAndAuthors) {
+        	String[] parts = entry.split(";-");
+        	String userOld = parts[0];
+        	String timestampOld = parts[1];
+        	String message = parts[2];
+        	User userInst = jda.getUserById(userOld);
+        	String user = "";
+        	String avUrl = "";
+        	if(userInst == null) {
+        		user = "User not found / " + userOld;
+        		avUrl = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541";
+        	}else {
+        		user = userInst.getName();
+        		avUrl = userInst.getEffectiveAvatarUrl();
+        	}
+        	String date = dateTranslator(timestampOld);
+        	html.append("<div class=\"message\">\n");
+        	html.append("<img src=" + avUrl + " alt=\"Avatar\" class=\"avatar\">\n");
+        	html.append("<div class=\"content\">\n");
+        	html.append("<span class=\"user\">" + user + "</span>\n");
+        	html.append("<span class=\"timestamp\">" + date + "</span>\n");
+        	html.append("<br>\n");
+        	html.append("<span class=\"text\">" + message + "</span>\n");
+        	html.append("</div>\n");
+        	html.append("</div>\n");
+        }
+        html.append("</div>\n");
+        html.append("</body>\n");
+        html.append("<script>\n");
+        html.append("window.onload = function() {\n");
+        html.append("const yearSpan = document.getElementById(\"currentYear\");\n");
+        html.append("yearSpan.textContent = new Date().getFullYear();\n");
+        html.append("}\n");
+        html.append("</script>\n");
+        html.append("<footer>\n");
+        html.append("<div class=\"footer-content\">\n");
+        html.append("<p class=\"copyright\">© 2023 - <span id=\"currentYear\"></span> Lotus Gaming Community. All rights reserved.</p>\n");
+        html.append("<p>Designed and built with ❤️ by MauriceLPs</p>\n");
+        html.append("<div class=\"social-icons\">\n");
+        html.append("<a href=\"https://www.instagram.com/lotusgamingcommunity\" target=\"_blank\" title=\"Instagram\">\n");
+        html.append("<i class=\"fa-brands fa-instagram\"></i>\n");
+        html.append("</a>\n");
+        html.append("<a href=\"https://www.x.com/lotusgamingcommunity\" target=\"_blank\" title=\"Twitter / X\">\n");
+        html.append("<i class=\"fa-brands fa-x-twitter\"></i>\n");
+        html.append("</a>\n");
+        html.append("<a href=\"https://www.facebook.com/lotusgamingcommunity\" target=\"_blank\" title=\"Facebook\">\n");
+        html.append("<i class=\"fa-brands fa-facebook\"></i>\n");
+        html.append("</a>\n");
+        html.append("<a href=\"https://www.discord.gg/7XZ2AR9A9z\" target=\"_blank\" title=\"Discord\">\n");
+        html.append("<i class=\"fa-brands fa-discord\"></i>\n");
+        html.append("</a>\n");
+        html.append("</div>\n");
+        html.append("<p><a href=\"https://lotuscommunity.eu\" style=\"color: #fff; text-decoration: underline;\">Visit our website</a></p>\n");
+        html.append("</div>\n");
+        html.append("</footer>\n");
+        html.append("<script src=\"https://use.fontawesome.com/releases/v6.6.0/js/all.js\"></script>");
+        html.append("</html>\n");
+        
+        File file = new File("/tmp/ticket-" + ticketid + ".html");
+        if(!file.exists()) {
+        	try {
+				file.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }else {
+        	file.delete();
+        	try {
+				file.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        try {
+        	FileWriter writer = new FileWriter(file);
+            writer.write(html.toString());
+            writer.flush();
+            writer.close();
+        }catch (IOException e) {
+        	e.printStackTrace();
+        }
+        
+        boolean uploaded = uploadFTPFile(file);
+        EmbedBuilder eb = ModlogController.baseEmbed(guild);
+        if(uploaded) {
+        	eb.setDescription("Ticket has been uploaded!");
+        	eb.setColor(ModlogController.green);
+        }else {
+        	eb.setDescription("Error whilst uploading ticket - please notify bot creator.");
+        	eb.setColor(ModlogController.red);
+        }
+        ModlogController.sendMessage(eb, guild);
+	}
+	
+	boolean uploadFTPFile(File fileToUpload) {
+		FTPClient ftpClient = new FTPClient();
+		boolean done = false;
+		try {
+			YamlFile cfg = YamlFile.loadConfiguration(LotusManager.mainConfig);
+			if(cfg.getBoolean("FTP.enabled")) {
+				ftpClient.connect(cfg.getString("FTP.Host"), cfg.getInt("FTP.Port"));
+				ftpClient.login(cfg.getString("FTP.Username"), cfg.getString("FTP.Password"));
+				ftpClient.enterLocalPassiveMode();
+				
+				ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+				
+				InputStream inputStream = new FileInputStream(fileToUpload);
+				Main.logger.info("Attempting to upload file " + fileToUpload.getName());
+				done = ftpClient.storeFile(fileToUpload.getName(), inputStream);
+				inputStream.close();
+				if(done) {
+					Main.logger.info("The File has been uploaded!");
+				}
+				if(ftpClient.isConnected()) {
+					ftpClient.logout();
+					ftpClient.disconnect();
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return done;
+	}
+	
+	String dateTranslator(String timestamp) {
+		return new SimpleDateFormat("dd.MM.yy - HH:mm:ss").format(new Date(Long.parseLong(timestamp)));
+	}
+	
+	int randomPin(int low, int max) {
+		Random r = new Random();
+		int number = r.nextInt(max);
+		while(number < low) {
+			number = r.nextInt(max);
+		}
+		return number;
+	}
 }
