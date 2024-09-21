@@ -33,10 +33,10 @@ public class MessageLogging extends ListenerAdapter {
 		User user = event.getAuthor();
 		if(event.isFromGuild()) {
 			Guild guild = event.getGuild();
-			if(!user.isBot() && !event.isWebhookMessage()) {
-				String message = TextCryptor.encrypt(event.getMessage().getContentRaw(), getPassword());
-				insertInDB(guild.getIdLong(), event.getMessageIdLong(), user.getIdLong(), message, user.isBot());
-			}
+			if(user.isBot()) return;
+			if(event.isWebhookMessage()) return;
+			String message = TextCryptor.encrypt(event.getMessage().getContentRaw(), getPassword());
+			insertInDB(guild.getIdLong(), event.getMessageIdLong(), user.getIdLong(), message, user.isBot());
 		}
 	}
 	
