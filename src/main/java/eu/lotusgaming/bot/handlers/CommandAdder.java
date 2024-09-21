@@ -27,11 +27,13 @@ public class CommandAdder {
 					
 					Commands.slash("tickethistory", "See the chat of that ticket")
 					.setGuildOnly(true)
-					.addOption(OptionType.INTEGER, "ticketid", "The ticket id to lookup")
+					.addOption(OptionType.INTEGER, "ticketid", "The ticket id to lookup", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.context(Type.MESSAGE, "Start Ticket")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
+					
+					Commands.context(Type.MESSAGE, "Translate"),
 					
 					Commands.slash("ticketban", "Bans a user/id from using the ticket system")
 					.setGuildOnly(true)
@@ -100,7 +102,15 @@ public class CommandAdder {
 					.setGuildOnly(true)
 					.addOption(OptionType.INTEGER, "messages", "The count of messages to be deleted (max 100)", true)
 					.addOption(OptionType.USER, "member", "Only delete the messages from this user (optional)")
-					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.MESSAGE_MANAGE, Permission.MANAGE_SERVER))
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.MESSAGE_MANAGE, Permission.MANAGE_SERVER)),
+					
+					Commands.slash("set-status", "Modify the online status for the bot")
+					.setGuildOnly(false),
+					
+					Commands.slash("set-activity", "Modify the activity status for the bot")
+					.setGuildOnly(false)
+					.addOption(OptionType.STRING, "option", "Choose what kind of activity the bot should display", true, true)
+					.addOption(OptionType.STRING, "text", "The text followed up", true)
 					).queue();
 		}
 	}
