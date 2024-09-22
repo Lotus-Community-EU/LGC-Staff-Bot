@@ -31,6 +31,7 @@ public class LotusManager {
 	public static File mainConfig = new File(configFolderName + "/" + mainConfigName);
 	private static File logFolder = new File(configFolderName + "/logs");
 	public static File tmpFolder = new File(configFolderName + "/tmp");
+	public static File assetsFolder = new File(configFolderName + "/assets");
 	
 	//must be initialized before bot startup!
 	public void preInit() {
@@ -46,6 +47,7 @@ public class LotusManager {
 			try { mainConfig.createNewFile(); } catch (Exception ex) {}
 		}
 		if(!tmpFolder.exists()) tmpFolder.mkdir();
+		if(!assetsFolder.exists()) assetsFolder.mkdir();
 		
 		List<Long> owners = new ArrayList<>();
 		owners.add(228145889988837385L);

@@ -1,6 +1,18 @@
 //Created by Maurice H. at 21.09.2024
 package eu.lotusgaming.bot.command;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.RenderingHints;
+import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.imageio.ImageIO;
+
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
+import eu.lotusgaming.bot.main.LotusManager;
 import eu.lotusgaming.bot.misc.MySQL;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -19,13 +34,13 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.FileUpload;
 
 public class LevelSystem extends ListenerAdapter {
 	
 	private final int basePoints = 1;
 	private final int pointsPerAttachment = 2;
 	private final int pointsPerKeyword = 2;
-	private final int levelUpMultiplier = 100;
 	private final int spamThresholdMilliseconds = 2000;
 	private final List<String> bonusKeywords = new ArrayList<>();
 	private final Map<Long, Long> userLastMessageTime = new HashMap<>();
@@ -78,11 +93,19 @@ public class LevelSystem extends ListenerAdapter {
 			event.replyEmbeds(eb.build()).queue();
 		}else if(event.getName().equals("level")) {
 			
+			
 			User target = null;
+			Member targetMember = null;
 			if(event.getOption("member") != null) {
 				target = event.getOption("member").getAsUser();
 			}else {
 				target = member.getUser();
+			}
+			if(guild.isMember(target)) {
+				targetMember = guild.getMember(target);
+			}else {
+				event.reply("Sorry, but the member you are looking for is not on this guild.").queue();
+				return;
 			}
 			
 			int points = getCurrentPoints(guild, target);
@@ -93,20 +116,145 @@ public class LevelSystem extends ListenerAdapter {
 			
 			int pointsIntoCurrentLevel = points - currentLevelPoints;
 			int pointsNeededForNextLevel = nextLevelPoints - currentLevelPoints;
-			double progress = (double) pointsIntoCurrentLevel / pointsNeededForNextLevel * 100;
-			String progressbar = generateProgressBar(progress);
 			
-			List<String> list = new ArrayList<>();
-			list.add(target.getEffectiveName() + " is currently on Level " + currentLevel + ".");
-			list.add(currentLevel + " " + progressbar + " " + + nextLevel);
-			StringBuilder sb = new StringBuilder();
-			for(String s : list) {
-				sb.append(s);
-				sb.append("\n");
+			double progressInt = (double) pointsIntoCurrentLevel / pointsNeededForNextLevel * 100;
+			
+			//BETA 
+			try {
+				
+				BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/light_blue_levelcard.png"));
+				BufferedImage avatar = ImageIO.read(new URL(target.getEffectiveAvatarUrl()));
+				Graphics2D g2d = levelCard.createGraphics();
+				Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/ibm_plexsans_reg.ttf"));
+				font = font.deriveFont(18F);
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				ge.registerFont(font);
+				
+				int avatarSize = 128;
+				int rounding = 5;
+				int avX = 12, avY = 26;
+				g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				RoundRectangle2D.Double clip = new RoundRectangle2D.Double(avX, avY, avatarSize, avatarSize, rounding, rounding);
+				g2d.setClip(clip);
+				g2d.drawImage(avatar, avX, avY, avatarSize, avatarSize, null);
+				g2d.setClip(null);
+				
+				g2d.setFont(font);
+				g2d.setColor(Color.black);
+				
+				{
+					//username
+					int boxX = 152;
+					int boxY = 26; //54
+					int boxW = 229;
+					int boxH = 29;
+					String textToDraw = targetMember.getEffectiveName();
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+					
+					//OLD g2d.drawString(targetMember.getEffectiveName(), 158, 50);
+				}
+				{
+					//level
+					int boxX = 152;
+					int boxY = 68; //96
+					int boxW = 162;
+					int boxH = 29;
+					String textToDraw = "Level: " + currentLevel;
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+					//OLD g2d.drawString("Level: " + currentLevel, 158, 93);
+				}
+				{
+					//points
+					int boxX = 152;
+					int boxY = 105; //132
+					int boxW = 162;
+					int boxH = 29;
+					String textToDraw = "Points: " + points;
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+					//OLD g2d.drawString("Points: " + points, 158, 129);
+				}
+				
+				int progressBarWidth = 367;
+				int progress = (int) ((progressInt / 100) * progressBarWidth);
+				
+				int progressBarX = 13; //13
+				int progressBarY = 195; //195
+				int progressBarHeight = 29;
+				int cornerRadius = 15;
+				
+				g2d.setColor(Color.GREEN);
+				g2d.fillRoundRect(progressBarX, progressBarY, progress,  progressBarHeight, cornerRadius, cornerRadius);
+				
+				g2d.setColor(Color.WHITE);
+				g2d.drawRoundRect(progressBarX, progressBarY, progressBarWidth, progressBarHeight, cornerRadius, cornerRadius);
+				
+				g2d.setColor(Color.black);
+				
+				{
+					//points
+					int boxX = 13;
+					int boxY = 195;
+					int boxW = progressBarWidth;
+					int boxH = 29;
+					String textToDraw = points + "/" + nextLevelPoints;
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+				}
+				{
+					//current Level
+					int boxX = 13;
+					int boxY = 165;
+					int boxW = 29;
+					int boxH = 29;
+					String textToDraw = String.valueOf(currentLevel);
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+				}
+				{
+					//next Level
+					int boxX = 351;
+					int boxY = 165;
+					int boxW = 29;
+					int boxH = 29;
+					String textToDraw = String.valueOf(nextLevel);
+					
+					FontMetrics metrics = g2d.getFontMetrics(font);
+					int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+					int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+					g2d.drawString(textToDraw, textX, textY);
+				}
+				
+				g2d.dispose();
+				
+				File tmpFile = new File(LotusManager.configFolderName + "/tmp/levelcard_" + target.getIdLong() + ".png");
+				ImageIO.write(levelCard, "png", tmpFile);
+				
+				event.replyFiles(FileUpload.fromData(tmpFile)).queue();
+				tmpFile.delete();
+				
+			} catch (IOException | FontFormatException e) {
+				e.printStackTrace();
 			}
-			String result = sb.toString();
 			
-			event.reply(result).queue();
+			//event.reply(result).queue();
 		}
 	}
 	
@@ -147,9 +295,102 @@ public class LevelSystem extends ListenerAdapter {
 			if(getCurrentPoints(guild, member.getUser()) >= nextLevelPoints) {
 				setNewLevel(guild, member.getUser(), currentLevel + 1);
 				//TODO send template with Username, Avatar and new Level into channel - autodelete after 20 seconds
-				event.getChannel().sendMessage(member.getAsMention() + "leveled up to Level " + (currentLevel + 1) + "!").queue(rA -> {
-					rA.delete().queueAfter(20, TimeUnit.SECONDS);
-				});
+				
+				try {
+					BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/purple_levelup_card.png"));
+					BufferedImage avatar = ImageIO.read(new URL(member.getEffectiveAvatarUrl()));
+					BufferedImage guildIcon = ImageIO.read(new URL(guild.getIconUrl()));
+					Graphics2D g2d = levelCard.createGraphics();
+					Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/ibm_plexsans_reg.ttf"));
+					font = font.deriveFont(18F);
+					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+					ge.registerFont(font);
+					
+					int avatarSize = 128;
+					int rounding = 5;
+					int avX = 10, avY = 74;
+					g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+					RoundRectangle2D.Double clip = new RoundRectangle2D.Double(avX, avY, avatarSize, avatarSize, rounding, rounding);
+					g2d.setClip(clip);
+					g2d.drawImage(avatar, avX, avY, avatarSize, avatarSize, null);
+					
+					int giS = 32, giR = 5, giX = 10, giY = 211;
+					RoundRectangle2D.Double clip2 = new RoundRectangle2D.Double(giX, giY, giS, giS, giR, giR);
+					g2d.setClip(clip2);
+					g2d.drawImage(guildIcon, giX, giY, giS, giS, null);
+					g2d.setClip(null);
+					
+					g2d.setFont(font);
+					g2d.setColor(Color.black);
+					
+					{
+						//title
+						int boxX = 10;
+						int boxY = 20;
+						int boxW = 380;
+						int boxH = 29;
+						String textToDraw = member.getEffectiveName() + " has leveled up!";
+						
+						FontMetrics metrics = g2d.getFontMetrics(font);
+						int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+						int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+						g2d.drawString(textToDraw, textX, textY);
+					}
+					{
+						//old level
+						int boxX = 221;
+						int boxY = 116;
+						int boxW = 50;
+						int boxH = 50;
+						String textToDraw = String.valueOf(currentLevel);
+						
+						FontMetrics metrics = g2d.getFontMetrics(font);
+						int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+						int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+						g2d.drawString(textToDraw, textX, textY);
+					}
+					{
+						//new level
+						int boxX = 307;
+						int boxY = 116;
+						int boxW = 50;
+						int boxH = 50;
+						String textToDraw = String.valueOf((currentLevel + 1));
+						
+						FontMetrics metrics = g2d.getFontMetrics(font);
+						int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+						int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+						g2d.drawString(textToDraw, textX, textY);
+					}
+					{
+						//guild name
+						int boxX = 48;
+						int boxY = 211;
+						int boxW = 230;
+						int boxH = 32;
+						String textToDraw = guild.getName();
+						
+						FontMetrics metrics = g2d.getFontMetrics(font);
+						int textX = boxX + (boxW - metrics.stringWidth(textToDraw)) / 2;
+						int textY = boxY + ((boxH - metrics.getHeight()) / 2) + metrics.getAscent();
+						g2d.drawString(textToDraw, textX, textY);
+					}
+					
+					g2d.dispose();
+					
+					File tmpFile = new File(LotusManager.configFolderName + "/tmp/levelcard_" + member.getIdLong() + ".png");
+					ImageIO.write(levelCard, "png", tmpFile);
+					
+					event.getChannel().sendFiles(FileUpload.fromData(tmpFile)).queue(rA -> {
+						rA.delete().queueAfter(30, TimeUnit.SECONDS);
+					});
+					tmpFile.delete();
+				}catch (Exception e) {
+					e.printStackTrace();
+				}
+				
+				
+				
 			}
 		}
 	}
@@ -361,20 +602,5 @@ public class LevelSystem extends ListenerAdapter {
 		case 59: return 30000;
 		default: return 0;
 		}
-	}
-	
-	private String generateProgressBar(double progress) {
-		int totalBars = 20;
-		int filledBars = (int) (totalBars * (progress / 100));
-		StringBuilder sb = new StringBuilder("[");
-		
-		for(int i = 0; i < filledBars; i++) {
-			sb.append("█");
-		}
-		for(int i = filledBars; i < totalBars; i++) {
-			sb.append("░");
-		}
-		sb.append("]");
-		return sb.toString();
 	}
 }

@@ -9,6 +9,7 @@ public class TranslateHandler extends ListenerAdapter {
 	
 	@Override
 	public void onMessageContextInteraction(MessageContextInteractionEvent event) {
+		@SuppressWarnings("unused")
 		Guild guild = event.getGuild();
 		
 	}

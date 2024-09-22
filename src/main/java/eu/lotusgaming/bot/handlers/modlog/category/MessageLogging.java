@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.simpleyaml.configuration.file.YamlFile;
 
@@ -17,7 +16,6 @@ import eu.lotusgaming.bot.misc.MySQL;
 import eu.lotusgaming.bot.misc.TextCryptor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.audit.AuditLogEntry;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageBulkDeleteEvent;
@@ -44,6 +42,7 @@ public class MessageLogging extends ListenerAdapter {
 	public void onMessageUpdate(MessageUpdateEvent event) {
 		User user = event.getAuthor();
 		if(event.isFromGuild()) {
+			if(user.isBot()) return;
 			Guild guild = event.getGuild();
 			String originalText = TextCryptor.decrypt(returnMessage(guild.getIdLong(), event.getMessageIdLong(), TextType.OriginalText), getPassword());
 			String lastUpdatedText = TextCryptor.decrypt(returnMessage(guild.getIdLong(), event.getMessageIdLong(), TextType.LastUpdatedText), getPassword());
@@ -90,6 +89,7 @@ public class MessageLogging extends ListenerAdapter {
 				eb.setAuthor("Member not cached.", null, guild.getIconUrl());
 			}
 			String lastUpdatedText = TextCryptor.decrypt(returnMessage(guild.getIdLong(), event.getMessageIdLong(), TextType.LastUpdatedText), getPassword());
+			if(lastUpdatedText == null) return;
 			if(lastUpdatedText.length() >= 1024) {
 				eb.addField("Message: ", lastUpdatedText.substring(0, 1023), false);
 			}else {
@@ -102,6 +102,7 @@ public class MessageLogging extends ListenerAdapter {
 	
 	@Override
 	public void onMessageBulkDelete(MessageBulkDeleteEvent event) {
+		@SuppressWarnings("unused")
 		Guild guild = event.getGuild();
 		List<String> messageIds = event.getMessageIds();
 		for(String string : messageIds) {
