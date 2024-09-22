@@ -63,7 +63,7 @@ public class LevelSystem extends ListenerAdapter {
 			int i = 0;
 			
 			try {
-				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_chatlevel WHERE guildId = ? ORDER by level DESC LIMIT " + topCount);
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_chatlevel WHERE guildId = ? ORDER by points DESC LIMIT " + topCount);
 				ps.setLong(1, guild.getIdLong());
 				ResultSet rs = ps.executeQuery();
 				sb.append(String.format("%-6s | %-24s | %-6s | %-5s%n", "Rank", "Name", "Points", "Level"));
@@ -294,7 +294,6 @@ public class LevelSystem extends ListenerAdapter {
 			int nextLevelPoints = getPointsForNextLevel(currentLevel + 1);
 			if(getCurrentPoints(guild, member.getUser()) >= nextLevelPoints) {
 				setNewLevel(guild, member.getUser(), currentLevel + 1);
-				//TODO send template with Username, Avatar and new Level into channel - autodelete after 20 seconds
 				
 				try {
 					BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/purple_levelup_card.png"));
