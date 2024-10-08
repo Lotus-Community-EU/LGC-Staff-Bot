@@ -9,6 +9,7 @@ import java.util.List;
 import org.simpleyaml.configuration.file.YamlFile;
 
 import eu.lotusgaming.bot.command.LevelSystem;
+import eu.lotusgaming.bot.command.Playerlookup;
 import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.PurgeCommand;
 import eu.lotusgaming.bot.command.SayCommand;
@@ -100,6 +101,7 @@ public class LotusManager {
 		jda.addEventListener(new PurgeCommand());
 		jda.addEventListener(new StatusActivityCommand());
 		jda.addEventListener(new LevelSystem());
+		jda.addEventListener(new Playerlookup());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
@@ -107,6 +109,8 @@ public class LotusManager {
 	
 	public void postInit() {
 		long current = System.currentTimeMillis();
+		
+		Playerlookup.initPlayers();
 		
 		Main.logger.info("Post-Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 	}
