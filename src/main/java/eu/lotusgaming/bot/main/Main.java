@@ -49,6 +49,7 @@ public class Main {
 			System.exit(0);
 		}
 		enableShutdownHook();
+		lm.postInit();
 	}
 	
 	private static void startBot(YamlFile cfg) {

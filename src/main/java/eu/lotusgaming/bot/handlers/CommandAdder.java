@@ -116,7 +116,11 @@ public class CommandAdder {
 					.addOption(OptionType.INTEGER, "top", "Override how many Entries you'd like to see. Up to 25 possible."),
 					
 					Commands.slash("level", "See your or someone else's current Level")
-					.addOption(OptionType.USER, "member", "The member to lookup.")
+					.addOption(OptionType.USER, "member", "The member to lookup."),
+					
+					Commands.slash("mclookup", "Player Lookup on Lotus for Minecraft")
+					.setGuildOnly(true)
+					.addOption(OptionType.STRING, "player", "The player to lookup", true, true)
 					).queue();
 		}
 	}
