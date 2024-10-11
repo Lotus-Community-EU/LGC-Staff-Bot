@@ -29,7 +29,7 @@ public class ModlogController {
 	public static void registerClasses(JDA jda) {
 		//TimerTask for Class:DatabaseMessageTimer
 		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new DatabaseMessageTimer(), 1000, 21600*1000);
+		timer.scheduleAtFixedRate(new DatabaseMessageTimer(), 0, 3600000);
 		
 		//Register Classes for Modlogs
 		jda.addEventListener(new UserEvents());
