@@ -13,6 +13,7 @@ import eu.lotusgaming.bot.command.Playerlookup;
 import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.PurgeCommand;
 import eu.lotusgaming.bot.command.SayCommand;
+import eu.lotusgaming.bot.command.Serverlookup;
 import eu.lotusgaming.bot.command.SetInfoCommand;
 import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.StatusActivityCommand;
@@ -102,6 +103,7 @@ public class LotusManager {
 		jda.addEventListener(new StatusActivityCommand());
 		jda.addEventListener(new LevelSystem());
 		jda.addEventListener(new Playerlookup());
+		jda.addEventListener(new Serverlookup());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
@@ -111,6 +113,7 @@ public class LotusManager {
 		long current = System.currentTimeMillis();
 		
 		Playerlookup.initPlayers();
+		Serverlookup.initServers();
 		
 		Main.logger.info("Post-Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 	}

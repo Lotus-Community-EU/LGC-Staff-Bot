@@ -161,7 +161,7 @@ public class GuildEvents extends ListenerAdapter{
 		eb.setTitle("Removed Role from Member");
 		eb.setColor(ModlogController.yellow);
 		if(event.getRoles().size() == 1) {
-			eb.setDescription(member.getAsMention() + " has been from the role " + event.getRoles().get(0).getAsMention());
+			eb.setDescription(member.getAsMention() + " has been removed from the role " + event.getRoles().get(0).getAsMention());
 		}else {
 			StringBuilder sb = new StringBuilder();
 			for(Role role : event.getRoles()) {
@@ -203,7 +203,7 @@ public class GuildEvents extends ListenerAdapter{
 		Member member = event.getMember();
 		
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
-		eb.setTitle("Member updated Avatar (Guildspecific)");
+		eb.setTitle(member.getEffectiveName() + " updated Avatar (Guildspecific)");
 		if(event.getNewAvatarUrl() != null) {
 			eb.setImage(event.getNewAvatarUrl());
 		}else {

@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.interactions.commands.Command.Type;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 
 public class CommandAdder {
 	
@@ -120,7 +121,11 @@ public class CommandAdder {
 					
 					Commands.slash("mclookup", "Player Lookup on Lotus for Minecraft")
 					.setGuildOnly(true)
-					.addOption(OptionType.STRING, "player", "The player to lookup", true, true)
+					.addOption(OptionType.STRING, "player", "The player to lookup", true, true),
+					
+					Commands.slash("serverinfo", "Looking up specific game server")
+					.setGuildOnly(true)
+					.addOptions(new OptionData(OptionType.STRING, "server", "Specify the Game Server").setAutoComplete(true))
 					).queue();
 		}
 	}

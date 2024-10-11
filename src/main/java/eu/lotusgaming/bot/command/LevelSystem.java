@@ -264,6 +264,7 @@ public class LevelSystem extends ListenerAdapter {
 			Guild guild = event.getGuild();
 			Member member = event.getMember();
 			
+			if(member == null) return;
 			if(member.getUser().isBot()) return;
 			if(member.getIdLong() == 1203717266990960760L) return;
 			
