@@ -123,7 +123,8 @@ public class Main {
 	
 	private static void enableShutdownHook() {
 		Thread printingHook = new Thread(() -> {
-			InfoUpdater.setOnlineStatus(false);
+			InfoUpdater.setOnlineStatus(false, "staffBot");
+			InfoUpdater.setOnlineStatus(false, "ts3");
 			MySQL.disconnect();
 			logger.info("Bot is in shutdownprogress, byebye...");
 			closeLogger();
