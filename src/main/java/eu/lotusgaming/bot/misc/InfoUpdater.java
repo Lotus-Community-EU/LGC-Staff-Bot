@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
+
+import eu.lotusgaming.bot.main.LotusManager;
+import eu.lotusgaming.bot.main.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -20,6 +24,7 @@ public class InfoUpdater extends TimerTask{
 
 	@Override
 	public void run() {
+		//this bot instance
 		try {
 			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingUniqueMembers = ? WHERE botKey = ?");
 			int guilds = 0;
@@ -46,6 +51,31 @@ public class InfoUpdater extends TimerTask{
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		
+		//ts3 asq-instance
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, servingUniqueMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ? WHERE botKey = ?");
+			
+			int members = 0;
+			for(Client cli : LotusManager.ts3api.getClients()) {
+				if(!cli.isServerQueryClient()) {
+					members++;
+				}
+			}
+			
+			ps.setInt(1, 1);
+			ps.setInt(2, members);
+			ps.setInt(3, members);
+			ps.setLong(4, System.currentTimeMillis());
+			ps.setString(5, getRAMInfo(RAMInfo.USING));
+			ps.setString(6, getRAMInfo(RAMInfo.ALLOCATED));
+			ps.setBoolean(7, true);
+			ps.setString(8, "ts3");
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public String getRAMInfo(RAMInfo type) {
@@ -61,14 +91,14 @@ public class InfoUpdater extends TimerTask{
 		return toReturn;
 	}
 	
-	public static void setOnlineStatus(boolean status) {
+	public static void setOnlineStatus(boolean status, String botkey) {
 		PreparedStatement ps;
 		if(status) {
 			try {
 				ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET isOnline = ?, onlineSince = ? WHERE botKey = ?");
 				ps.setBoolean(1, status);
 				ps.setLong(2, System.currentTimeMillis());
-				ps.setString(3, "staffBot");
+				ps.setString(3, botkey);
 				ps.executeUpdate();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -77,7 +107,7 @@ public class InfoUpdater extends TimerTask{
 			try {
 				ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET isOnline = ? WHERE botKey = ?");
 				ps.setBoolean(1, status);
-				ps.setString(2, "staffBot");
+				ps.setString(2, botkey);
 				ps.executeUpdate();
 			} catch (SQLException e) {
 				e.printStackTrace();
