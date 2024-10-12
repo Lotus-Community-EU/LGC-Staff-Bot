@@ -79,8 +79,15 @@ public class GuildEvents extends ListenerAdapter{
 			sb.append(role.getName());
 			sb.append(" ");
 		}
-		String roles = sb.toString().substring(0, sb.toString().length() - 1);
-		eb.addField("Roles (" + event.getMember().getRoles().size() + ")", "The user has these roles: " + roles, false);
+		int roleCount = event.getMember().getRoles().size();
+		String roles = "";
+		if(roleCount != 0) {
+			roles = sb.toString().substring(0, sb.toString().length() - 1);
+		}else {
+			roles = "none";
+		}
+		
+		eb.addField("Roles (" + roleCount + ")", "The user has these roles: " + roles, false);
 		eb.setColor(ModlogController.red);
 		if(checkList.contains(user)) {
 			eb.setTitle("Member has been banned and left.");
