@@ -24,6 +24,7 @@ public class SetInfoCommand extends ListenerAdapter{
 					TextChannel infoChannel = event.getOption("channel").getAsChannel().asTextChannel();
 					event.reply("Infos are sent into " + infoChannel.getAsMention()).queue();
 					infoChannel.sendMessage(transform(info_block())).queue();
+					info_blockSocialMedia(infoChannel, event.getGuild());
 					info_blockTeam(infoChannel, event.getGuild());
 				}else {
 					event.deferReply(true).addContent("The Channel must be a text channel!").queue();
@@ -38,8 +39,27 @@ public class SetInfoCommand extends ListenerAdapter{
 		info.add("Question: Do you guys accept partnerships?\nAnswer: As of now, no, we don't. That might be a subject for later.\nStill want to give it a shot? Create a ticket in <#1203720766366027866> under the category **General Support**");
 		info.add("Question: I want to apply! What do I have to do now?\nAnswer: Currently, we do recruit people, however we can do it only via ticket system. Create a ticket in <#1203720766366027866> under the category **General Support**");
 		info.add("Question: Beta-Tester - I want to be one too!\nAnswer: Glad you'd like to help us, however we pick Beta Testers. There won't be a recruitment process. If you want, you can create a ticket in <#1203720766366027866> under the category **General Support** and elaborate, why we should pick you!");
-		info.add("Question: What about social media?\nAnswer: We actually don't have social media yet. But it is planned. Stay tuned!");
 		return info;
+	}
+	
+	void info_blockSocialMedia(TextChannel targetChannel, Guild guild) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(Color.decode("#e53c50"));
+		eb.setThumbnail(guild.getIconUrl());
+		List<String> info = new ArrayList<>();
+		info.add("<:facebook:1298613148689109042> [Lotus Gaming Community](https://www.facebook.com/profile.php?id=61567189271322)");
+		info.add("<:instagram:1298613152866631680> [@lotuscommunityeu](https://www.instagram.com/lotuscommunityeu/)");
+		info.add("<:x_twitter:1298613146537300009> [@lotusgamingeu](https://x.com/lotusgamingeu)");
+		info.add("<:threads:1298613145035604059> [@lotuscommunityeu](https://www.threads.net/@lotuscommunityeu)");
+		StringBuilder sb = new StringBuilder();
+		for(String s : info) {
+			sb.append(s);
+			sb.append("\n");
+		}
+		String result = sb.toString();
+		eb.setDescription(result);
+		eb.setTitle("Our Socials");
+		targetChannel.sendMessageEmbeds(eb.build()).queue();
 	}
 	
 	void info_blockTeam(TextChannel targetChannel, Guild guild) {
@@ -64,6 +84,7 @@ public class SetInfoCommand extends ListenerAdapter{
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(Color.decode("#e53c50"));
 		eb.setThumbnail(guild.getIconUrl());
+		eb.setTitle("Our Staff Team");
 		for(long l : staffRoles) {
 			Role role = guild.getRoleById(l);
 			if(role != null) {
