@@ -3,6 +3,9 @@ package eu.lotusgaming.bot.handlers.modlog;
 
 import java.awt.Color;
 import java.io.File;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +17,8 @@ import eu.lotusgaming.bot.handlers.modlog.category.GuildEvents;
 import eu.lotusgaming.bot.handlers.modlog.category.MessageLogging;
 import eu.lotusgaming.bot.handlers.modlog.category.RoleEvents;
 import eu.lotusgaming.bot.handlers.modlog.category.UserEvents;
+import eu.lotusgaming.bot.misc.MySQL;
+import eu.lotusgaming.bot.misc.VCDuration;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -74,6 +79,64 @@ public class ModlogController {
 		eb.setFooter(guild.getName() + " ● " + dateToString(new Date(), "dd.MM.yy - HH:mm"), guild.getIconUrl());
 		return eb;
 	}
-
+	
+	public static void addMember(long guildId, long channelId, long memberId) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("INSERT INTO bot_s_voicedurations(guildId,memberId,channelId,timeJoined,timeLastMoved) VALUES (?,?,?,?,?)");
+			ps.setLong(1, guildId);
+			ps.setLong(2, memberId);
+			ps.setLong(3, channelId);
+			ps.setLong(4, System.currentTimeMillis());
+			ps.setLong(5, 0);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void moveMember(long guildId, long memberId) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_s_voicedurations SET timeLastMoved = ? WHERE guildId = ? AND memberId = ?");
+			ps.setLong(1, System.currentTimeMillis());
+			ps.setLong(2, guildId);
+			ps.setLong(3, memberId);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static VCDuration removeMember(long guildId, long memberId) {
+		VCDuration vcd = null;
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_voicedurations WHERE guildId = ? AND memberId = ?");
+			ps.setLong(1, guildId);
+			ps.setLong(2, memberId);
+			ResultSet rs = ps.executeQuery();
+			if(rs.next()) {
+				long guildID = rs.getLong("guildId");
+				long channelId = rs.getLong("channelId");
+				long memberID = rs.getLong("memberId");
+				long timeJoin = rs.getLong("timeJoined");
+				long timeLastMoved = rs.getLong("timeLastMoved");
+				vcd = new VCDuration(guildID, memberID, channelId, timeJoin, timeLastMoved);
+				deleteMember(guildID, memberID);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return vcd;
+	}
+	
+	private static void deleteMember(long guildId, long memberId) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("DELETE FROM bot_s_voicedurations WHERE guildId = ? AND memberId = ?");
+			ps.setLong(1, guildId);
+			ps.setLong(2, memberId);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 }
-
