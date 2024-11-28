@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
+import com.github.theholywaffle.teamspeak3.api.Property;
 import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
+import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
 
 import eu.lotusgaming.bot.main.LotusManager;
 import eu.lotusgaming.bot.main.Main;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 
@@ -26,9 +29,10 @@ public class InfoUpdater extends TimerTask{
 	public void run() {
 		//this bot instance
 		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingUniqueMembers = ? WHERE botKey = ?");
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingUniqueMembers = ?, servingOnlineMembers = ? WHERE botKey = ?");
 			int guilds = 0;
 			int members = 0;
+			List<Long> uniqueOnlineMembers = new ArrayList<>();
 			List<Long> uniqueMembers = new ArrayList<>();
 			for(Guild guild : jda.getGuilds()) {
 				guilds++;
@@ -36,6 +40,11 @@ public class InfoUpdater extends TimerTask{
 					members++;
 					if(!uniqueMembers.contains(member.getIdLong())) {
 						uniqueMembers.add(member.getIdLong());
+					}
+					if(member.getOnlineStatus() != OnlineStatus.OFFLINE) {
+						if(!uniqueOnlineMembers.contains(member.getIdLong())) {
+							uniqueOnlineMembers.add(member.getIdLong());
+						}
 					}
 				}
 			}
@@ -46,7 +55,8 @@ public class InfoUpdater extends TimerTask{
 			ps.setString(5, getRAMInfo(RAMInfo.ALLOCATED));
 			ps.setBoolean(6, true);
 			ps.setInt(7, uniqueMembers.size());
-			ps.setString(8, "staffBot");
+			ps.setInt(8, uniqueOnlineMembers.size());
+			ps.setString(9, "staffBot");
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -54,7 +64,7 @@ public class InfoUpdater extends TimerTask{
 		
 		//ts3 asq-instance
 		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, servingUniqueMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ? WHERE botKey = ?");
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, servingUniqueMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingOnlineMembers = ? WHERE botKey = ?");
 			
 			int members = 0;
 			for(Client cli : LotusManager.ts3api.getClients()) {
@@ -70,7 +80,8 @@ public class InfoUpdater extends TimerTask{
 			ps.setString(5, getRAMInfo(RAMInfo.USING));
 			ps.setString(6, getRAMInfo(RAMInfo.ALLOCATED));
 			ps.setBoolean(7, true);
-			ps.setString(8, "ts3");
+			ps.setInt(8, members);
+			ps.setString(9, "ts3");
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			e.printStackTrace();
