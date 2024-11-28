@@ -7,11 +7,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
+import eu.lotusgaming.bot.misc.VCDuration;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -22,6 +24,7 @@ import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateAvatarEve
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateIconEvent;
 import net.dv8tion.jda.api.events.guild.update.GuildUpdateNameEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class GuildEvents extends ListenerAdapter{
@@ -217,6 +220,34 @@ public class GuildEvents extends ListenerAdapter{
 			eb.setImage(member.getDefaultAvatarUrl());
 		}
 		eb.setColor(ModlogController.green);
+		ModlogController.sendMessage(eb, guild);
+	}
+	
+	@Override
+	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
+		Guild guild = event.getGuild();
+		Member member = event.getMember();
+		EmbedBuilder eb = ModlogController.baseEmbed(guild);
+		if(event.getChannelJoined() != null) {
+			//Join Event
+			eb.setTitle(member.getEffectiveName() + " has joined " + event.getChannelJoined().getName());
+			ModlogController.addMember(guild.getIdLong(), event.getChannelJoined().getIdLong(), member.getIdLong());
+		}else if(event.getChannelLeft() != null) {
+			//Leave Event
+			eb.setTitle(member.getEffectiveName() + " has left " + event.getChannelJoined().getName());
+			VCDuration vcd = ModlogController.removeMember(guild.getIdLong(), member.getIdLong());
+			if(event.getChannelLeft().getIdLong() == vcd.getChannelId()) {
+				eb.setDescription("User joined voice <t:" + vcd.getTimeJoin() + ":R> ago.");
+			}else {
+				VoiceChannel initChannel = guild.getVoiceChannelById(vcd.getChannelId());
+				eb.setDescription("User joined voice initially in " + initChannel.getAsMention() + " <t:" + vcd.getTimeJoin() + ":R> ago.");
+			}
+		}else if(event.getChannelJoined() != null && event.getChannelLeft() != null) {
+			//Moved Event
+			eb.setTitle(member.getEffectiveName() + " has moved channels");
+			eb.setDescription("The member moved from " + event.getChannelLeft().getAsMention() + " to " + event.getChannelJoined().getAsMention());
+			ModlogController.moveMember(guild.getIdLong(), member.getIdLong());
+		}
 		ModlogController.sendMessage(eb, guild);
 	}
 }
