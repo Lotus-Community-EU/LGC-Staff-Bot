@@ -13,7 +13,7 @@ public class VCDuration {
 	}
 
 	public long getTimeJoin() {
-		return timeJoin;
+		return timeJoin / 1000;
 	}
 
 	public long getChannelId() {
