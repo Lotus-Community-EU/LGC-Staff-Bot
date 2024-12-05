@@ -3,11 +3,10 @@ package eu.lotusgaming.bot.misc;
 
 public class VCDuration {
 	
-	long timeJoin, timeLastMove, channelId, memberId, guildId;
+	long timeJoin, channelId, memberId, guildId;
 	
-	public VCDuration(long guildId, long memberId, long channelId, long timeJoin, long timeLastMove) {
+	public VCDuration(long guildId, long memberId, long channelId, long timeJoin) {
 		this.timeJoin = timeJoin;
-		this.timeLastMove = timeLastMove;
 		this.channelId = channelId;
 		this.memberId = memberId;
 		this.guildId = guildId;
@@ -15,10 +14,6 @@ public class VCDuration {
 
 	public long getTimeJoin() {
 		return timeJoin;
-	}
-
-	public long getTimeLastMove() {
-		return timeLastMove;
 	}
 
 	public long getChannelId() {

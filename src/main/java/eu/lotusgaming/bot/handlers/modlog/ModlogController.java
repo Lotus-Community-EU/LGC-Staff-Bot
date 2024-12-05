@@ -82,46 +82,36 @@ public class ModlogController {
 	
 	public static void addMember(long guildId, long channelId, long memberId) {
 		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("INSERT INTO bot_s_voicedurations(guildId,memberId,channelId,timeJoined,timeLastMoved) VALUES (?,?,?,?,?)");
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("INSERT INTO bot_s_voicedurations(guildId,memberId,channelId,timeJoined) VALUES (?,?,?,?)");
 			ps.setLong(1, guildId);
 			ps.setLong(2, memberId);
 			ps.setLong(3, channelId);
 			ps.setLong(4, System.currentTimeMillis());
-			ps.setLong(5, 0);
 			ps.executeUpdate();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void moveMember(long guildId, long memberId) {
-		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_s_voicedurations SET timeLastMoved = ? WHERE guildId = ? AND memberId = ?");
-			ps.setLong(1, System.currentTimeMillis());
-			ps.setLong(2, guildId);
-			ps.setLong(3, memberId);
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public static VCDuration removeMember(long guildId, long memberId) {
+	public static VCDuration removeMember(long guildId, long channelId, long memberId) {
 		VCDuration vcd = null;
 		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_voicedurations WHERE guildId = ? AND memberId = ?");
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_voicedurations WHERE guildId = ? AND memberId = ? AND channelId = ?");
 			ps.setLong(1, guildId);
 			ps.setLong(2, memberId);
+			ps.setLong(3, channelId);
 			ResultSet rs = ps.executeQuery();
 			if(rs.next()) {
 				long guildID = rs.getLong("guildId");
-				long channelId = rs.getLong("channelId");
+				long channelID = rs.getLong("channelId");
 				long memberID = rs.getLong("memberId");
 				long timeJoin = rs.getLong("timeJoined");
-				long timeLastMoved = rs.getLong("timeLastMoved");
-				vcd = new VCDuration(guildID, memberID, channelId, timeJoin, timeLastMoved);
+				vcd = new VCDuration(guildID, memberID, channelID, timeJoin);
 				deleteMember(guildID, memberID);
 			}
+			rs.close();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -135,6 +125,7 @@ public class ModlogController {
 			ps.setLong(1, guildId);
 			ps.setLong(2, memberId);
 			ps.executeUpdate();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
