@@ -122,10 +122,10 @@ public class LevelSystem extends ListenerAdapter {
 			//BETA 
 			try {
 				
-				BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/light_blue_levelcard.png"));
+				BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/templates/light_blue_levelcard.png"));
 				BufferedImage avatar = ImageIO.read(new URL(target.getEffectiveAvatarUrl()));
 				Graphics2D g2d = levelCard.createGraphics();
-				Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/ibm_plexsans_reg.ttf"));
+				Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/fonts/ibm_plexsans_reg.ttf"));
 				font = font.deriveFont(18F);
 				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 				ge.registerFont(font);
@@ -297,11 +297,11 @@ public class LevelSystem extends ListenerAdapter {
 				setNewLevel(guild, member.getUser(), currentLevel + 1);
 				
 				try {
-					BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/purple_levelup_card.png"));
+					BufferedImage levelCard = ImageIO.read(new File(LotusManager.configFolderName + "/assets/templates/purple_levelup_card.png"));
 					BufferedImage avatar = ImageIO.read(new URL(member.getEffectiveAvatarUrl()));
 					BufferedImage guildIcon = ImageIO.read(new URL(guild.getIconUrl()));
 					Graphics2D g2d = levelCard.createGraphics();
-					Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/ibm_plexsans_reg.ttf"));
+					Font font = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/fonts/ibm_plexsans_reg.ttf"));
 					font = font.deriveFont(18F);
 					GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 					ge.registerFont(font);

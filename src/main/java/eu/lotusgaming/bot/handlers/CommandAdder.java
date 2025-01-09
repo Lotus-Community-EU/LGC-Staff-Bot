@@ -8,11 +8,13 @@ import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 public class CommandAdder {
 	
 	public static void addCommands(JDA jda) {
 		for(Guild guild : jda.getGuilds()) {
+			
 			guild.updateCommands().addCommands(
 					//Commands regarding the Ticket System.
 					Commands.slash("setticketchannel", "Sets the Ticket Channel")
@@ -34,7 +36,27 @@ public class CommandAdder {
 					Commands.context(Type.MESSAGE, "Start Ticket")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
 					
+					Commands.slash("ticket", "Main command for the Ticket System")
+					.setGuildOnly(true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS))
+					.addSubcommands(
+                            new SubcommandData("adduser", "Adds an user to this ticket")
+                            .addOption(OptionType.USER, "user", "The user to add", true),
+                            
+                            new SubcommandData("removeuser", "Removes an user from this ticket")
+                            .addOption(OptionType.USER, "user", "The user to remove from this ticket", true),
+                            
+                            new SubcommandData("close", "Closes the ticket")
+                            .addOption(OptionType.STRING, "reason", "The reason to close this ticket", true),
+                            
+                            new SubcommandData("closerequest", "Requests the ticket creator to close the ticket")
+                            .addOption(OptionType.STRING, "reason", "The reason to close this ticket", true)
+                            .addOption(OptionType.INTEGER, "close_delay", "How many hours to pass if the user does not respond to auto-close it.")
+                        ),
+					
 					Commands.context(Type.MESSAGE, "Translate"),
+					
+					Commands.context(Type.MESSAGE, "Report this!"),
 					
 					Commands.slash("ticketban", "Bans a user/id from using the ticket system")
 					.setGuildOnly(true)

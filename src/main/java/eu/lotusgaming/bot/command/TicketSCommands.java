@@ -9,12 +9,19 @@ import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.net.ftp.FTP;
@@ -55,6 +62,8 @@ public class TicketSCommands extends ListenerAdapter{
 	
 	static int nextTicketId = 0;
 	static HashMap<Member, Boolean> hm_ticketclose = new HashMap<>();
+	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private static Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
@@ -164,12 +173,10 @@ public class TicketSCommands extends ListenerAdapter{
 				e.printStackTrace();
 			}
 			List<String> history = translateIntoHumanReadableMessages(msgHistory, cfg.getString("Bot.HashPassword"));
-			int pin = randomPin(1000, 9999);
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setColor(event.getMember().getColor());
-			eb.setTitle("Look Up Ticket here", "http://tickets.lotusgaming.eu/ticket-" + ticketId + ".html");
-			eb.setDescription("Pin: " + pin);
-			generateChatHTMLDocument(pin, event.getJDA(), guild, creatorId, closedById, createdAt, closedAt, topic, closeReason, history, rating, ticketId);
+			int pin = generateChatHTMLDocument(event.getJDA(), guild, creatorId, closedById, createdAt, closedAt, topic, closeReason, history, rating, ticketId);
+			eb.setTitle("Look Up Ticket here", "http://tickets.lotuscommunity.eu/ticket-" + ticketId + "-" + pin + ".html");
 			event.getHook().sendMessageEmbeds(eb.build()).queue();
 		}else if(event.getName().equals("ticketban")) {
 			event.deferReply().queue();
@@ -216,7 +223,80 @@ public class TicketSCommands extends ListenerAdapter{
 					}
 				}
 			}
-			
+		}else if(event.getName().equals("ticket")) {
+			String scn = event.getSubcommandName();
+			if(scn.equals("adduser")) {
+				if(isTicketChannel(event.getChannel().getIdLong())) {
+					Member target = event.getOption("user").getAsMember();
+					event.getChannel().asTextChannel().upsertPermissionOverride(target).grant(Permission.VIEW_CHANNEL, Permission.MESSAGE_HISTORY, Permission.MESSAGE_SEND, Permission.MESSAGE_ADD_REACTION, Permission.MESSAGE_EXT_EMOJI, Permission.MESSAGE_EXT_STICKER).queue();
+					event.reply("User " + target.getAsMention() + " has been added to this ticket!").queue();
+				}else {
+					event.deferReply(true).addContent("This is not a ticket channel!").queue();
+				}
+			}else if(scn.equals("removeuser")) {
+				if(isTicketChannel(event.getChannel().getIdLong())) {
+					Member target = event.getOption("user").getAsMember();
+					event.getChannel().asTextChannel().upsertPermissionOverride(target).deny(Permission.VIEW_CHANNEL, Permission.MESSAGE_SEND).queue();
+					event.reply("User " + target.getAsMention() + " has been removed from this ticket!").queue();
+				}else {
+					event.deferReply(true).addContent("This is not a ticket channel!").queue();
+				}
+			}else if(scn.equals("close")) {
+				if(isTicketChannel(event.getChannel().getIdLong())) {
+					String reason = event.getOption("reason").getAsString();
+					event.deferReply(true).addContent("Ticket will be closed in 5 seconds...").queue();
+					TextChannel channel = event.getChannel().asTextChannel();
+					String ticketId = channel.getName().substring(7);
+					sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), reason);
+					closeTicket(channel.getIdLong(), event.getMember().getIdLong(), reason);
+					channel.delete().queueAfter(4, TimeUnit.SECONDS);
+				}else {
+					event.deferReply(true).addContent("This is not a ticket channel!").queue();
+				}
+			}else if(scn.equals("closerequest")) {
+				if (isTicketChannel(event.getChannel().getIdLong())) {
+					if(event.getOption("close_delay") != null) {
+						int delay = event.getOption("close_delay").getAsInt();
+						Instant closeTime = Instant.now().plusSeconds(delay * 3600L);
+						
+						String reason = event.getOption("reason").getAsString();
+						User user = event.getJDA().getUserById(getTicketCreator(event.getChannel().getIdLong()));
+						
+						 ScheduledFuture<?> task = scheduler.schedule(() -> autoCloseTicket(event, reason), delay, TimeUnit.HOURS);
+						 scheduledTasks.put(event.getChannelIdLong(), task);
+						 saveCloseRequest(event.getGuild().getIdLong(), event.getChannelIdLong(), reason, closeTime, event.getMember());
+						
+						EmbedBuilder eb = new EmbedBuilder();
+						eb.setColor(ModlogController.green);
+						eb.setTitle("Close Request");
+						eb.setDescription(event.getMember().getAsMention() + " has requested to close this ticket. \nReason: ``" + reason + "``");
+						eb.setFooter("Please accept or deny using the buttons below.");
+						
+						event.deferReply().addContent(user.getAsMention()).addEmbeds(eb.build()).addActionRow(
+								Button.success("closeYes", "Accept & Close"),
+								Button.primary("closeNo", "Deny & Keep Open")
+								).queue();
+					}else {
+						String reason = event.getOption("reason").getAsString();
+						User user = event.getJDA().getUserById(getTicketCreator(event.getChannel().getIdLong()));
+						
+						EmbedBuilder eb = new EmbedBuilder();
+						eb.setColor(ModlogController.green);
+						eb.setTitle("Close Request");
+						eb.setDescription(event.getMember().getAsMention() + " has requested to close this ticket. \nReason: ``" + reason + "``");
+						eb.setFooter("Please accept or deny using the buttons below.");
+						
+						event.deferReply().addContent(user.getAsMention()).addEmbeds(eb.build()).addActionRow(
+								Button.success("closeYes", "Accept & Close"),
+								Button.primary("closeNo", "Deny & Keep Open")
+								).queue();
+					}
+					
+					
+				} else {
+					event.deferReply(true).addContent("This is not a ticket channel!").queue();
+				}
+			}
 		}
 	}
 	
@@ -424,6 +504,23 @@ public class TicketSCommands extends ListenerAdapter{
 				.addOption("Very Bad", "6")
 				.build()
 			).queue();
+		}else if(event.getComponentId().equals("closeYes")) {
+			event.deferReply(true).addContent("Ticket will be closed in 5 seconds...").queue();
+            TextChannel channel = event.getChannel().asTextChannel();
+            cancelScheduledTask(channel.getIdLong());
+            String ticketId = channel.getName().substring(7);
+            sendTicketLogDeleted(event.getGuild(), ticketId, event.getMember(), "Closed by " + event.getUser().getAsMention());
+            closeTicket(channel.getIdLong(), event.getMember().getIdLong(), "Ticket has been closed by " + event.getUser().getAsMention());
+            channel.delete().queueAfter(4, TimeUnit.SECONDS);
+		}else if(event.getComponentId().equals("closeNo")) {
+			EmbedBuilder eb = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
+			eb.clear();
+			eb.setColor(ModlogController.red);
+			eb.setTitle("Close Request");
+			eb.setDescription(event.getMember().getAsMention() + " denied the close request");
+			event.getMessage().editMessageEmbeds(eb.build()).queue();
+			event.deferReply(true).addContent("This Ticket will stay open.").queue();
+			cancelScheduledTask(event.getChannelIdLong());
 		}
 	}
 	
@@ -550,10 +647,33 @@ public class TicketSCommands extends ListenerAdapter{
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						addMessageHistory(event.getMember().getIdLong(), event.getMessage().getContentRaw(), channel.getIdLong(), cfg.getString("Bot.HashPassword"));
+						addMessageHistory(event.getMember().getIdLong(), event.getMessage().getContentRaw(), channel.getIdLong(), hexColor(event.getMember().getColorRaw()), cfg.getString("Bot.HashPassword"));
 					}
 				}
 			}
+		}
+	}
+	
+	
+	
+	long getTicketCreator(long channelId) {
+		if(isTicketChannel(channelId)) {
+			try {
+				PreparedStatement ps = MySQL.getConnection()
+						.prepareStatement("SELECT creatorId FROM bot_s_tickets WHERE channelId = ?");
+				ps.setLong(1, channelId);
+				ResultSet rs = ps.executeQuery();
+				if (rs.next()) {
+					return rs.getLong("creatorId");
+				}else {
+					return 0L;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return 0L;
+			}
+		}else {
+			return 0L;
 		}
 	}
 	
@@ -590,6 +710,14 @@ public class TicketSCommands extends ListenerAdapter{
 		eb.setDescription("Ticket " + ticketId + " has been closed.\n"
 				+ "Closer: " + closer.getAsMention() + " / " + closer.getEffectiveName() + "\n"
 				+ "Reason: " + reason);
+		guild.getTextChannelById(1208894257289756705l).sendMessageEmbeds(eb.build()).queue();
+	}
+	
+	void sendTicketLogDeleted(Guild guild, String ticketId, String closer, String reason) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(Color.red);
+		eb.setDescription(
+				"Ticket " + ticketId + " has been closed.\n" + "Closer: " + closer + "\n" + "Reason: " + reason);
 		guild.getTextChannelById(1208894257289756705l).sendMessageEmbeds(eb.build()).queue();
 	}
 	
@@ -636,10 +764,10 @@ public class TicketSCommands extends ListenerAdapter{
 		}
 	}
 	
-	void addMessageHistory(long messager, String message, long channelId, String pass) {
+	void addMessageHistory(long messager, String message, long channelId, String colorCode, String pass) {
 		String oldMessage = getMessageHistory(channelId);
 		List<String> history = translateIntoHumanReadableMessages(oldMessage, pass);
-		history.add(messager + ";-" + System.currentTimeMillis() + ";-" + message);
+		history.add(messager + ";-" + System.currentTimeMillis() + ";-" + colorCode + ";-" + message);
 		String newMessage = translateIntoHashedMessage(history, pass);
 		try {
 			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_s_tickets SET msg_history = ?, lastMessage = ? WHERE channelId = ?");
@@ -647,6 +775,7 @@ public class TicketSCommands extends ListenerAdapter{
 			ps.setLong(2, System.currentTimeMillis());
 			ps.setLong(3, channelId);
 			ps.executeUpdate();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -658,6 +787,7 @@ public class TicketSCommands extends ListenerAdapter{
 			ps.setInt(1, Integer.valueOf(rating));
 			ps.setLong(2, channelId);
 			ps.executeUpdate();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -670,6 +800,7 @@ public class TicketSCommands extends ListenerAdapter{
 			ps.setString(1, rating);
 			ps.setLong(2, channelId);
 			ps.executeUpdate();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -684,6 +815,8 @@ public class TicketSCommands extends ListenerAdapter{
 			if(rs.next()) {
 				toReturn = rs.getString("msg_history");
 			}
+			rs.close();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -691,7 +824,7 @@ public class TicketSCommands extends ListenerAdapter{
 	}
 	
 	List<String> translateIntoHumanReadableMessages(String input, String pass) {
-		String[] enc = TextCryptor.decrypt(input, pass.toCharArray()).split(";;");
+		String[] enc = TextCryptor.decrypt(input, pass.toCharArray()).split(";-;");
 		List<String> history = new ArrayList<>();
 		for(String string : enc) {
 			history.add(string);
@@ -699,37 +832,12 @@ public class TicketSCommands extends ListenerAdapter{
 		return history;
 	}
 	
-	String translateListIntoProperSentences(List<String> input, JDA jda) {
-		input.remove(0);
-		StringBuilder sb = new StringBuilder();
-		for(String string : input) {
-			if(string.split(";-").length == 3) {
-				User user = jda.getUserById(string.split(";-")[0]);
-				long timestamp = Long.parseLong(string.split(";-")[1]);
-				String msg = string.split(";-")[2];
-				//SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yy - HH:mm:ss");
-				//String date = sdf.format(new Date(timestamp));
-				if(user != null) {
-					sb.append("<t:" + (timestamp / 1000) + ":R> | " + user.getEffectiveName() + ": " + msg);
-				}else {
-					sb.append("<t:" + (timestamp / 1000) + ":R> | " + string.split(";-")[0] + ": " + msg);
-				}
-				sb.append("\n");
-			}
-		}
-		if(sb.toString().isBlank()) {
-			return "Error in Message History.";
-		}else {
-			return sb.toString();
-		}
-	}
-	
 	String translateIntoHashedMessage(List<String> input, String pass) {
 		String toReturn = "";
 		StringBuilder sb = new StringBuilder();
 		for(String string : input) {
 			sb.append(string);
-			sb.append(";;");
+			sb.append(";-;"); //MUST MATCH WITH THE SPLIT FUNCTION IN "translateIntoHumanReadableMessages" AND CANNOT BE THE SAME REGEX LIKE IN THE SINGLE MESSAGE DELIMITER!!!!!!!!!!!
 		}
 		toReturn = sb.toString().substring(0, (sb.toString().length() - 2));
 		toReturn = TextCryptor.encrypt(toReturn, pass.toCharArray());
@@ -746,6 +854,8 @@ public class TicketSCommands extends ListenerAdapter{
 			if(rs.next()) {
 				isBanned = true;
 			}
+			rs.close();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -757,6 +867,7 @@ public class TicketSCommands extends ListenerAdapter{
 				ps.setString(3, reason);
 				ps.setLong(4, bannedId);
 				ps.executeUpdate();
+				ps.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -774,6 +885,8 @@ public class TicketSCommands extends ListenerAdapter{
 			if(rs.next()) {
 				isUnbanned = false;
 			}
+			rs.close();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -782,6 +895,7 @@ public class TicketSCommands extends ListenerAdapter{
 				PreparedStatement ps = MySQL.getConnection().prepareStatement("DELETE FROM bot_s_ticketban WHERE bannedId = ?");
 				ps.setLong(1, bannedId);
 				ps.executeUpdate();
+				ps.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -798,182 +912,160 @@ public class TicketSCommands extends ListenerAdapter{
 			}else {
 				nextTicketId = 1;
 			}
+			rs.close();
+			ps.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	void generateChatHTMLDocument(int pin, JDA jda, Guild guild, long ticketCreator, long ticketCloser, long createdAt, long closedAt, String topic, String closedReason, List<String> messagesAndAuthors, int rating, int ticketid) {
+	int generateChatHTMLDocument(JDA jda, Guild guild, long ticketCreator, long ticketCloser, long createdAt, long closedAt, String topic, String closedReason, List<String> messagesAndAuthors, int rating, int ticketid) {
 		messagesAndAuthors.remove(0);
 		StringBuilder html = new StringBuilder();
         
-        html.append("<!DOCTYPE html>\n");
-        html.append("<html lang=\"en\">\n");
-        html.append("<head>\n");
-        html.append("<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n");
-        html.append("<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n");
-        html.append("<link href=\"https://fonts.googleapis.com/css2?family=Handjet:wght@100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap\" rel=\"stylesheet\">\n");
-        html.append("<meta charset=\"UTF-8\">\n");
-        html.append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
-        html.append("<style>\n");
-        html.append("body { font-family: \"Roboto\", sans-serif; font-weight: 400; font-style: normal; background-color: #404040;}\n");
-        html.append(".chat-container { margin: 20px auto; width: 50%; border: 1px solid #ccc; padding: 10px; border-radius: 10px; }\n");
-        html.append(".info-container { margin: 20px auto; width: 50%; border: 1px solid #ccc; padding: 10px; border-radius: 10px; }\n");
-        html.append(".message { display: flex; align-items: center; margin-bottom: 15px; color: #ffffff; }\n");
-        html.append(".avatar { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #ccc; margin-right: 10px; }\n");
-        html.append(".content { display: flex; flex-direction: column; }\n");
-        html.append(".user { font-weight: bold; color: #b3d9ff; }\n");
-        html.append(".timestamp { font-size: 0.8em; color: #fff; margin-left: 5px; }\n");
-        html.append(".text { margin-left: 10px; color: #ffffff;}\n");
-        html.append(".info-pre { color: #29a329; }\n");
-        html.append(".info-post { margin-left: 5px; color: #ffffff; }\n");
-        html.append(".title { text-align: center; color: #ffffff;}\n");
-        html.append("footer { background-color: #505050; color: white; padding: 20px 0; text-align: center; bottom: 0; width: 99vw; font-size: 16px; }\n");
-        html.append(".footer-content { max-width: 1200px; margin: 0 auto; padding: 0 20px; }\n");
-        html.append(".social-icons { margin: 20px 0; }\n");
-        html.append(".social-icons a { margin: 0 10px; color: #fff; text-decoration: none; font-size: 24px; }\n");
-        html.append(".social-icons a:hover { color: #000; }\n");
-        html.append(".copyright { margin-top: 10px; font-size: 14px; }\n");
-        html.append("</style>\n");
-        html.append("<h1 class=\"title\">" + guild.getName() + " Ticket History</h1>\n");
-        html.append("<title>LGC Support Ticket History</title>\n");
-        html.append("<div class=\"info-container\">\n");
-        html.append("<span class=\"info-pre\">Creator:</span>\n");
-        User creator = jda.getUserById(ticketCreator);
-        if(creator == null) {
-        	html.append("<span class=\"info-post\">User not found / " + ticketCreator + "</span>\n");
-        }else {
-        	html.append("<span class=\"info-post\">" + creator.getName() + "</span>\n");
-        }
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Created at:</span>\n");
-        html.append("<span class=\"info-post\">" + dateTranslator("" + createdAt) + "</span>\n");
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Closed by:</span>\n");
-        User closer = jda.getUserById(ticketCloser);
-        if(closer == null) {
-        	html.append("<span class=\"info-post\">User not found / " + ticketCloser + "</span>\n");
-        }else {
-        	html.append("<span class=\"info-post\">" + closer.getName() + "</span>\n");
-        }
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Closed at:</span>\n");
-        html.append("<span class=\"info-post\">" + dateTranslator("" + closedAt) + "</span>\n");
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Close Reason:</span>\n");
-        html.append("<span class=\"info-post\">" + closedReason + "</span>\n");
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Ticket ID:</span>\n");
-        html.append("<span class=\"info-post\">" + ticketid + "</span>\n");
-        html.append("<br>\n");
-        html.append("<span class=\"info-pre\">Rating</span>\n");
-        html.append("<span class=\"info-post\">" + rating + " / 6</span>\n");
-        html.append("</div>\n");
-        html.append("</head>\n");
-        html.append("<body>\n");
-        html.append("<script>\n");
-        html.append("var password = \"" + pin + "\";\n");
-        html.append("(function passcodeprotect() {\n");
-        html.append("var passcode = prompt(\"Enter Password:\");\n");
-        html.append("while(passcode !== password) {\n");
-        html.append("alert(\"Incorrect Password!\");\n");
-        html.append("return passcodeprotect();\n");
-        html.append("}\n");
-        html.append("}());\n");
-        html.append("</script>\n");
-        html.append("<div class=\"chat-container\">\n");
-        for(String entry : messagesAndAuthors) {
-        	String[] parts = entry.split(";-");
-        	String userOld = parts[0];
-        	String timestampOld = parts[1];
-        	String message = parts[2];
-        	User userInst = jda.getUserById(userOld);
-        	String user = "";
-        	String avUrl = "";
-        	if(userInst == null) {
-        		user = "User not found / " + userOld;
-        		avUrl = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541";
-        	}else {
-        		user = userInst.getName();
-        		avUrl = userInst.getEffectiveAvatarUrl();
-        	}
-        	String date = dateTranslator(timestampOld);
-        	html.append("<div class=\"message\">\n");
-        	html.append("<img src=" + avUrl + " alt=\"Avatar\" class=\"avatar\">\n");
-        	html.append("<div class=\"content\">\n");
-        	html.append("<span class=\"user\">" + user + "</span>\n");
-        	html.append("<span class=\"timestamp\">" + date + "</span>\n");
-        	html.append("<br>\n");
-        	html.append("<span class=\"text\">" + message + "</span>\n");
-        	html.append("</div>\n");
-        	html.append("</div>\n");
-        }
-        html.append("</div>\n");
-        html.append("</body>\n");
-        html.append("<script>\n");
-        html.append("window.onload = function() {\n");
-        html.append("const yearSpan = document.getElementById(\"currentYear\");\n");
-        html.append("yearSpan.textContent = new Date().getFullYear();\n");
-        html.append("}\n");
-        html.append("</script>\n");
-        html.append("<footer>\n");
-        html.append("<div class=\"footer-content\">\n");
-        html.append("<p class=\"copyright\">© 2023 - <span id=\"currentYear\"></span> Lotus Gaming Community. All rights reserved.</p>\n");
-        html.append("<p>Designed and built with ❤️ by MauriceLPs</p>\n");
-        html.append("<div class=\"social-icons\">\n");
-        html.append("<a href=\"https://www.instagram.com/lotusgamingcommunity\" target=\"_blank\" title=\"Instagram\">\n");
-        html.append("<i class=\"fa-brands fa-instagram\"></i>\n");
-        html.append("</a>\n");
-        html.append("<a href=\"https://www.x.com/lotusgamingcommunity\" target=\"_blank\" title=\"Twitter / X\">\n");
-        html.append("<i class=\"fa-brands fa-x-twitter\"></i>\n");
-        html.append("</a>\n");
-        html.append("<a href=\"https://www.facebook.com/lotusgamingcommunity\" target=\"_blank\" title=\"Facebook\">\n");
-        html.append("<i class=\"fa-brands fa-facebook\"></i>\n");
-        html.append("</a>\n");
-        html.append("<a href=\"https://www.discord.gg/7XZ2AR9A9z\" target=\"_blank\" title=\"Discord\">\n");
-        html.append("<i class=\"fa-brands fa-discord\"></i>\n");
-        html.append("</a>\n");
-        html.append("</div>\n");
-        html.append("<p><a href=\"https://lotuscommunity.eu\" style=\"color: #fff; text-decoration: underline;\">Visit our website</a></p>\n");
-        html.append("</div>\n");
-        html.append("</footer>\n");
-        html.append("<script src=\"https://use.fontawesome.com/releases/v6.6.0/js/all.js\"></script>");
-        html.append("</html>\n");
-        
-        File file = new File("/tmp/ticket-" + ticketid + ".html");
-        if(!file.exists()) {
-        	try {
-				file.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-        }else {
-        	file.delete();
-        	try {
-				file.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-        }
-        try {
-        	FileWriter writer = new FileWriter(file);
-            writer.write(html.toString());
-            writer.flush();
-            writer.close();
-        }catch (IOException e) {
-        	e.printStackTrace();
-        }
-        
-        boolean uploaded = uploadFTPFile(file);
-        EmbedBuilder eb = ModlogController.baseEmbed(guild);
-        if(uploaded) {
-        	eb.setDescription("Ticket has been uploaded!");
-        	eb.setColor(ModlogController.green);
-        }else {
-        	eb.setDescription("Error whilst uploading ticket - please notify bot creator.");
-        	eb.setColor(ModlogController.red);
-        }
-        ModlogController.sendMessage(eb, guild);
+		html.append("<!DOCTYPE html>");
+		html.append("<html lang=\"en\">");
+		html.append("<head>");
+		html.append("    <meta charset=\"UTF-8\">");
+		html.append("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+		html.append("    <title>Ticket " + ticketid + "</title>");
+		html.append("    <link rel=\"stylesheet\" href=\"assets/style.css\">");
+		html.append("</head>");
+		html.append("<body>");
+		html.append("    <div class=\"container\">");
+		html.append("        <div class=\"header\">"); //HEADER
+		html.append("            <h1>#ticket-" + ticketid + "</h1>");
+		html.append("            <span class=\"info-pre\">Opened by:</span>");
+		User opener = jda.getUserById(ticketCreator);
+		if(opener == null) {
+			html.append("            <span class=\"info-post\">Unknown User / " + ticketCreator + "</span>");
+		}else {
+			html.append("            <span class=\"info-post\">" + opener.getName() +"</span>");
+		}
+		
+		html.append("            <span class=\"info-pre\">and opened at:</span>");
+		html.append("            <span class=\"info-post\">" + dateTranslator("" + createdAt) + "</span>");
+		html.append("            <br>");
+		html.append("            <span class=\"info-pre\">Category:</span>");
+		html.append("            <span class=\"info-post\">" + topic + "</span>");
+		html.append("            <br>");
+		html.append("            <span class=\"info-pre\">Closed by:</span>");
+		User closer = jda.getUserById(ticketCloser);
+		if(closer == null) {
+			html.append("            <span class=\"info-post\">Unknown User / " + ticketCreator + "</span>");
+		}else {
+			html.append("            <span class=\"info-post\">" + closer.getName() +"</span>");
+		}
+		html.append("            <span class=\"info-pre\">and closed at:</span>");
+		html.append("            <span class=\"info-post\">" + dateTranslator("" + closedAt) + "</span>");
+		html.append("            <br>");
+		html.append("            <span class=\"info-pre\">Reason for closure:</span>");
+		html.append("            <span class=\"info-post\">" + closedReason + "</span>");
+		html.append("            <br>");
+		html.append("            <span class=\"info-pre\">Rating:</span>");
+		html.append("            <span class=\"info-post\">" + rating + " / 6</span>");
+		html.append("        </div>");
+		html.append("        <div class=\"chat\">");
+		
+		//CHAT
+		for(String entry : messagesAndAuthors) {
+            String[] parts = entry.split(";-");
+            String userOld = parts[0];
+            String timestampOld = parts[1];
+            String color = parts[2];
+            String message = parts[3];
+            String user = "";
+            String avUrl = "";
+            User userInst = jda.getUserById(userOld);
+            if(userInst != null) {
+            	user = userInst.getName();
+            	avUrl = userInst.getEffectiveAvatarUrl();
+            }else {
+				user = "User not found / " + userOld;
+				avUrl = "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541";
+            }
+            String date = dateTranslator(timestampOld);
+            html.append("            <div class=\"message\">");
+    		html.append("                <img src=\"" + avUrl +"\" alt=\"Avatar\" class=\"avatar\">");
+    		html.append("                <div class=\"content\">");
+    		html.append("                    <span class=\"name\" style=\"color: " + color + ";\">" + user + "</span>");
+    		html.append("                    <span class=\"timestamp\">" + date + "</span>");
+    		html.append("                    <div class=\"text\">" + message + "</div>");
+    		html.append("                </div>");
+    		html.append("            </div>");
+    		html.append("");
+		}
+		html.append("        </div>"); //CHAT CLOSE
+		html.append("        <script src=\"https://use.fontawesome.com/releases/v6.6.0/js/all.js\"></script>");
+		html.append("        <div class=\"footer\">");
+		html.append("            <div class=\"footer-content\">");
+		html.append("                <p class=\"copyright\">2023 - <script>document.write(new Date().getFullYear())</script> <span id=\"currentYear\"></span> Lotus Gaming Community. All rights reserved.</p>");
+		html.append("                <p class=\"footer-info\">Designed and built with ❤️ by MauriceLPs</p>");
+		html.append("                <div class=\"social-icons\">");
+		
+		html.append("                    <a href=\"https://www.instagram.com/lotusgamingcommunity\" target=\"_blank\" title=\"Instagram\">");
+		html.append("                        <i class=\"fa-brands fa-instagram\"></i>");
+		html.append("                    </a>");
+		html.append("                    <a href=\"https://www.threads.net/@lotuscommunityeu\" target=\"_blank\" title=\"Threads\">");
+		html.append("                        <i class=\"fa-brands fa-threads\"></i>");
+		html.append("                    </a>");
+		html.append("                    <a href=\"https://x.com/lotusgamingeu\" target=\"_blank\" title=\"Twitter / X\">");
+		html.append("                        <i class=\"fa-brands fa-x-twitter\"></i>");
+		html.append("                    </a>");
+		html.append("                    <a href=\"https://www.facebook.com/profile.php?id=61567189271322\" target=\"_blank\" title=\"Facebook\">");
+		html.append("                        <i class=\"fa-brands fa-facebook\"></i>");
+		html.append("                    </a>");
+		html.append("                    <a href=\"https://www.discord.gg/7XZ2AR9A9z\" target=\"_blank\" title=\"Discord\">");
+		html.append("                        <i class=\"fa-brands fa-discord\"></i>");
+		html.append("                    </a>");
+		/*html.append("                    <a href=\"KOFI URL\" target=\"_blank\" title=\"Ko-Fi\">");
+		html.append("                        <i class=\"fa-solid fa-mug-hot\"></i>");
+		html.append("                    </a>");
+		html.append("                    <a href=\"PATREONURL\" target=\"_blank\" title=\"Patreon\">");
+		html.append("                        <i class=\"fa-brands fa-patreon\"></i>");
+		html.append("                    </a>");*/ //KO-FI and Patreon will be added later
+		html.append("                </div>");
+		html.append("                <p><a href=\"https://lotuscommunity.eu\" style=\"color: #fff; text-decoration: none;\">Visit our Website</a></p>");
+		html.append("			</div>");
+		html.append("        </div>");
+		html.append("    </div>");
+		html.append("</body>");
+		html.append("</html>");
+		
+		int random = randomPin(1000, 9999);
+
+	    File file = new File("/tmp/ticket-" + ticketid + "-" + random + ".html");
+	    if (!file.exists()) {
+	        try {
+	            file.createNewFile();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    } else {
+	        file.delete();
+	        try {
+	            file.createNewFile();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	    }
+	    try (FileWriter writer = new FileWriter(file)) {
+	        writer.write(html.toString());
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+
+	    boolean uploaded = uploadFTPFile(file);
+	    EmbedBuilder eb = ModlogController.baseEmbed(guild);
+	    if (uploaded) {
+	        eb.setDescription("Ticket has been uploaded!");
+	        eb.setColor(ModlogController.green);
+	    } else {
+	        eb.setDescription("Error whilst uploading ticket - please notify bot creator.");
+	        eb.setColor(ModlogController.red);
+	    }
+	    ModlogController.sendMessage(eb, guild);
+	    return random;
 	}
 	
 	boolean uploadFTPFile(File fileToUpload) {
@@ -1017,5 +1109,97 @@ public class TicketSCommands extends ListenerAdapter{
 			number = r.nextInt(max);
 		}
 		return number;
+	}
+	
+	private void autoCloseTicket(SlashCommandInteractionEvent event, String reason) {
+		event.getChannel().sendMessage("Ticket is now closed automatically. Reason: " + reason).queue();
+		cancelScheduledTask(event.getChannelIdLong());
+	}
+	
+	private void saveCloseRequest(long guildId, long channelId, String reason, Instant closeTime, Member member) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("INSERT INTO bot_s_ticket_crequests (channel_id, reason, close_time, guild_id, close_requester) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE reason = ?, close_time = ?");
+			ps.setLong(1, channelId);
+			ps.setString(2, reason);
+			ps.setTimestamp(3, Timestamp.from(closeTime));
+			ps.setLong(4, guildId);
+			ps.setLong(5, member.getIdLong());
+			ps.setString(6, reason);
+			ps.setTimestamp(7, Timestamp.from(closeTime));
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void deleteCloseRequest(long channelId) {
+		try {
+            PreparedStatement ps = MySQL.getConnection().prepareStatement("DELETE FROM bot_s_ticket_crequests WHERE channel_id = ?");
+            ps.setLong(1, channelId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+	}
+	
+	public void loadPendingCloseRequests(JDA jda) {
+		try {
+			PreparedStatement ps = MySQL.getConnection().prepareStatement("SELECT * FROM bot_s_ticket_crequests");
+			ResultSet rs = ps.executeQuery();
+			int i = 0;
+			int ii = 0;
+			while(rs.next()) {
+				i++;
+				long channelId = rs.getLong("channel_id");
+				String reason = rs.getString("reason");
+				Instant closeTime = rs.getTimestamp("close_time").toInstant();
+				long guildId = rs.getLong("guild_id");
+				long crequester = rs.getLong("close_requester");
+				long delaySeconds = closeTime.getEpochSecond() - Instant.now().getEpochSecond();
+				if(delaySeconds > 0) {
+					ii++;
+					ScheduledFuture<?> task = scheduler.schedule(() -> autoCloseTicket(guildId, channelId, reason, jda, crequester), delaySeconds, TimeUnit.SECONDS);
+					scheduledTasks.put(channelId, task);
+				}
+			}
+			Main.logger.info("Loaded " + i + " Requests, " + ii + " are still pending.");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void cancelScheduledTask(long channelId) {
+		ScheduledFuture<?> task = scheduledTasks.get(channelId);
+		if (task != null) {
+			scheduledTasks.remove(channelId);
+			task.cancel(false);
+		}
+		deleteCloseRequest(channelId);
+	}
+	
+	private void autoCloseTicket(long guildId, long channelId, String reason, JDA jda, long crequester) {
+		Main.logger.info("Auto-Closed Channel " + channelId + " with reason + " + reason);
+		scheduledTasks.remove(channelId);
+		deleteCloseRequest(channelId);
+		Guild targetGuild = jda.getGuildById(guildId);
+		User user = jda.getUserById(crequester);
+		String username = "Unable to resolve User";
+		if(user != null) {
+			username = user.getAsMention() + " / " + user.getIdLong();
+		}
+		if(targetGuild != null) {
+			String ticketId = targetGuild.getTextChannelById(channelId).getName().substring(7);
+			sendTicketLogDeleted(targetGuild, ticketId, "SYSTEM-Autoclose", reason);
+			
+			closeTicket(targetGuild.getTextChannelById(channelId).getIdLong(), 0, "Ticket has been auto-closed. \nRequester: " + username + " \nReason: " + reason);
+			
+			targetGuild.getTextChannelById(channelId).sendMessage("Ticket is now closed automatically. Reason: " + reason).queue();
+			targetGuild.getTextChannelById(channelId).delete().queueAfter(5, TimeUnit.SECONDS);
+			
+		}
+	}
+	
+	private String hexColor(int color) {
+		return String.format("#%06X", (0xFFFFFF & color)).toLowerCase();
 	}
 }

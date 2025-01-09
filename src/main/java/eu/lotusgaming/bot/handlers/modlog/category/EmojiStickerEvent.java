@@ -7,6 +7,10 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.emoji.EmojiAddedEvent;
 import net.dv8tion.jda.api.events.emoji.EmojiRemovedEvent;
 import net.dv8tion.jda.api.events.emoji.update.EmojiUpdateNameEvent;
+import net.dv8tion.jda.api.events.sticker.GuildStickerAddedEvent;
+import net.dv8tion.jda.api.events.sticker.GuildStickerRemovedEvent;
+import net.dv8tion.jda.api.events.sticker.update.GuildStickerUpdateDescriptionEvent;
+import net.dv8tion.jda.api.events.sticker.update.GuildStickerUpdateNameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class EmojiStickerEvent extends ListenerAdapter {
@@ -45,9 +49,52 @@ public class EmojiStickerEvent extends ListenerAdapter {
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
 		eb.setTitle("Serveremoji has been updated");
 		eb.setThumbnail(event.getEmoji().getImageUrl());
-		eb.setDescription("Old Emoji Name: " + event.getOldName());
-		eb.setColor(ModlogController.red);
+		eb.setDescription("Old Emoji Name: " + event.getOldName() + "\nNew Emoji Name: " + event.getNewName());
+		eb.setColor(ModlogController.yellow);
 		ModlogController.sendMessage(eb, guild);
 	}
-
+	
+	@Override
+	public void onGuildStickerAdded(GuildStickerAddedEvent event) {
+		Guild guild = event.getGuild();
+		EmbedBuilder eb = ModlogController.baseEmbed(guild);
+		eb.setTitle("Serversticker has been added.");
+		eb.setThumbnail(event.getSticker().getIcon().getUrl());
+		eb.setDescription("Sticker Name: " + event.getSticker().getName());
+		eb.setColor(ModlogController.green);
+		ModlogController.sendMessage(eb, guild);
+	}
+	
+	@Override
+	public void onGuildStickerRemoved(GuildStickerRemovedEvent event) {
+		Guild guild = event.getGuild();
+        EmbedBuilder eb = ModlogController.baseEmbed(guild);
+        eb.setTitle("Serversticker has been removed.");
+        eb.setThumbnail(event.getSticker().getIcon().getUrl());
+        eb.setDescription("Sticker Name: " + event.getSticker().getName());
+        eb.setColor(ModlogController.red);
+        ModlogController.sendMessage(eb, guild);
+	}
+	
+	@Override
+	public void onGuildStickerUpdateDescription(GuildStickerUpdateDescriptionEvent event) {
+		Guild guild = event.getGuild();
+        EmbedBuilder eb = ModlogController.baseEmbed(guild);
+        eb.setTitle("Serversticker has been updated.");
+        eb.setThumbnail(event.getSticker().getIcon().getUrl());
+        eb.setDescription("Old Sticker Description: " + event.getOldValue() + "\nNew Sticker Description: " + event.getNewValue());
+        eb.setColor(ModlogController.yellow);
+        ModlogController.sendMessage(eb, guild);
+	}
+	
+	@Override
+	public void onGuildStickerUpdateName(GuildStickerUpdateNameEvent event) {
+		Guild guild = event.getGuild();
+        EmbedBuilder eb = ModlogController.baseEmbed(guild);
+        eb.setTitle("Serversticker has been updated.");
+        eb.setThumbnail(event.getSticker().getIcon().getUrl());
+        eb.setDescription("Old Sticker Name: " + event.getOldValue() + "\nNew Sticker Name: " + event.getNewValue());
+        eb.setColor(ModlogController.yellow);
+        ModlogController.sendMessage(eb, guild);
+	}
 }
