@@ -1,7 +1,9 @@
 //Created by Christopher at 17.07.2024
 package eu.lotusgaming.bot.handlers.modlog.category;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -13,7 +15,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildUnbanEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
@@ -33,7 +34,7 @@ public class GuildEvents extends ListenerAdapter{
 	 * Following Events will be added: *GuildBanEvent, *GuildUnbanEvent, *GuildMemberRemoveEvent,
 	 * * GuildUpdateIconEvent, *GuildUpdateNameEvent, *GuildMemberJoinEvent, *GuildMemberRoleAddEvent,
 	 * * GuildMemberRoleRemoveEvent, * GuildMemberUpdateNicknameEvent, * GuildMemberUpdateAvatarEvent,
-	 * GuildVoiceJoinEvent, GuildVoiceLeaveEvent, GuildVoiceMoveEvent - will be added later.
+	 * * GuildVoiceJoinEvent, *GuildVoiceLeaveEvent, *GuildVoiceMoveEvent
 	 */
 	
 	static List<User> checkList = new ArrayList<>();
@@ -228,26 +229,37 @@ public class GuildEvents extends ListenerAdapter{
 		Guild guild = event.getGuild();
 		Member member = event.getMember();
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
-		if(event.getChannelJoined() != null) {
+		if(event.getChannelJoined() != null && event.getChannelLeft() == null) {
 			//Join Event
-			eb.setTitle(member.getEffectiveName() + " has joined " + event.getChannelJoined().getName());
+			eb.setDescription(member.getAsMention() + " has joined " + event.getChannelJoined().getAsMention());
+			eb.setColor(ModlogController.green);
 			ModlogController.addMember(guild.getIdLong(), event.getChannelJoined().getIdLong(), member.getIdLong());
-		}else if(event.getChannelLeft() != null) {
+		}
+		if(event.getChannelLeft() != null) {
 			//Leave Event
-			eb.setTitle(member.getEffectiveName() + " has left " + event.getChannelJoined().getName());
-			VCDuration vcd = ModlogController.removeMember(guild.getIdLong(), member.getIdLong());
-			if(event.getChannelLeft().getIdLong() == vcd.getChannelId()) {
-				eb.setDescription("User joined voice <t:" + vcd.getTimeJoin() + ":R> ago.");
-			}else {
-				VoiceChannel initChannel = guild.getVoiceChannelById(vcd.getChannelId());
-				eb.setDescription("User joined voice initially in " + initChannel.getAsMention() + " <t:" + vcd.getTimeJoin() + ":R> ago.");
-			}
-		}else if(event.getChannelJoined() != null && event.getChannelLeft() != null) {
+			VCDuration vcd = ModlogController.removeMember(guild.getIdLong(), event.getChannelLeft().getIdLong(), member.getIdLong());
+			
+			long joinTime = vcd.getTimeJoin();
+			long actualTime = (System.currentTimeMillis() / 1000) - joinTime;
+			long hours = actualTime / 3600;
+			long minutes = (actualTime % 3600) / 60;
+			long seconds = actualTime % 60;
+			String formattedTime = String.format("%02dh %02dm %02ds", hours, minutes, seconds);
+			
+			eb.setDescription(member.getAsMention() + " has left " + event.getChannelLeft().getAsMention() + "\nJoined at " + timestampToHRT(joinTime) + "\nCall Duration: " + formattedTime);
+			eb.setColor(ModlogController.red);
+		}
+		if(event.getChannelJoined() != null && event.getChannelLeft() != null) {
 			//Moved Event
 			eb.setTitle(member.getEffectiveName() + " has moved channels");
+			eb.setColor(ModlogController.yellow);
 			eb.setDescription("The member moved from " + event.getChannelLeft().getAsMention() + " to " + event.getChannelJoined().getAsMention());
-			ModlogController.moveMember(guild.getIdLong(), member.getIdLong());
 		}
 		ModlogController.sendMessage(eb, guild);
+	}
+	
+	String timestampToHRT(long input) {
+		input = input * 1000;
+		return new SimpleDateFormat("dd.MM - HH:mm:ss").format(new Date(input));
 	}
 }
