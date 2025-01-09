@@ -24,6 +24,7 @@ import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.StatusActivityCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
+import eu.lotusgaming.bot.handlers.ReportHandler;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
 import eu.lotusgaming.bot.misc.MySQL;
@@ -115,6 +116,7 @@ public class LotusManager {
 		jda.addEventListener(new LevelSystem());
 		jda.addEventListener(new Playerlookup());
 		jda.addEventListener(new Serverlookup());
+		jda.addEventListener(new ReportHandler());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
