@@ -17,6 +17,9 @@ import java.util.TimerTask;
 
 import javax.imageio.ImageIO;
 
+import org.simpleyaml.configuration.file.YamlFile;
+
+import eu.lotusgaming.bot.main.LotusManager;
 import eu.lotusgaming.bot.main.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -34,71 +37,69 @@ public class XMAS_NEWYEARScheduler extends TimerTask {
 	int width = 384;
 	int height = 192;
 	
+	File runFile = new File(LotusManager.configFolderName + "/poster.yml");
 	
 	static boolean inited = false;
-	static boolean ranAlready = false;
 
 	@Override
 	public void run() {
 		if(!inited) {
 			inited = true;
+			initFile();
 			Main.logger.info("New Year / XMAS Scheduler started.");
 		}
 		
 		Guild guild = jda.getGuildById(1153419306789507125L);
 		TextChannel channel = guild.getTextChannelById(1201229752992809040L);
 		
-		String time = new SimpleDateFormat("HH.mm:ss").format(new Date());
+		String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
 		String date = new SimpleDateFormat("dd.MM").format(new Date());
 		
 		File file = null;
 		String text = "";
 		
-		if(time.matches("00:00:02") || date.matches("00:00:03")) {
-			if(!ranAlready) {
-				switch(date) {
-				case "01.12": file = new File("assets/templates/christmas1.png"); text = "23 Days"; break;
-				case "02.12": file = new File("assets/templates/christmas4.png"); text = "22 Days"; break;
-				case "03.12": file = new File("assets/templates/christmas2.png"); text = "21 Days"; break;
-				case "04.12": file = new File("assets/templates/christmas1.png"); text = "20 Days"; break;
-				case "05.12": file = new File("assets/templates/christmas2.png"); text = "19 Days"; break;
-				case "06.12": file = new File("assets/templates/christmas4.png"); text = "18 Days"; break;
-				case "07.12": file = new File("assets/templates/christmas1.png"); text = "17 Days"; break;
-				case "08.12": file = new File("assets/templates/christmas3.png"); text = "16 Days"; break;
-				case "09.12": file = new File("assets/templates/christmas5.png"); text = "15 Days"; break;
-				case "10.12": file = new File("assets/templates/christmas4.png"); text = "14 Days"; break;
-				case "11.12": file = new File("assets/templates/christmas6.png"); text = "13 Days"; break;
-				case "12.12": file = new File("assets/templates/christmas2.png"); text = "12 Days"; break;
-				case "13.12": file = new File("assets/templates/christmas3.png"); text = "11 Days"; break;
-				case "14.12": file = new File("assets/templates/christmas1.png"); text = "10 Days"; break;
-				case "15.12": file = new File("assets/templates/christmas6.png"); text = "9 Days"; break;
-				case "16.12": file = new File("assets/templates/christmas5.png"); text = "8 Days"; break;
-				case "17.12": file = new File("assets/templates/christmas4.png"); text = "7 Days"; break;
-				case "18.12": file = new File("assets/templates/christmas1.png"); text = "6 Days"; break;
-				case "19.12": file = new File("assets/templates/christmas4.png"); text = "5 Days"; break;
-				case "20.12": file = new File("assets/templates/christmas5.png"); text = "4 Days"; break;
-				case "21.12": file = new File("assets/templates/christmas6.png"); text = "3 Days"; break;
-				case "22.12": file = new File("assets/templates/christmas3.png"); text = "2 Days"; break;
-				case "23.12": file = new File("assets/templates/christmas1.png"); text = "1 Day"; break;
-				case "24.12": file = new File("assets/templates/christmas5.png"); text = "Merry Christmas!"; break;
-				case "25.12": file = new File("assets/templates/feuerwerk1.png"); text = "6 Days"; break;
-				case "26.12": file = new File("assets/templates/feuerwerk2.png"); text = "5 Days"; break;
-				case "27.12": file = new File("assets/templates/feuerwerk3.png"); text = "4 Days"; break;
-				case "28.12": file = new File("assets/templates/feuerwerk4.png"); text = "3 Days"; break;
-				case "29.12": file = new File("assets/templates/feuerwerk5.png"); text = "2 Days"; break;
-				case "30.12": file = new File("assets/templates/feuerwerk6.png"); text = "1 Day"; break;
-				}
-				File fileEdit = editFile(file, text);
-				if (fileEdit != null) {
-					channel.sendFiles(FileUpload.fromData(fileEdit)).queue();
-					fileEdit.delete();
-					file.delete();
-				}
-				ranAlready = true;
+		if(!hasDayRun(Integer.parseInt(date.split("\\.")[0]))) {
+			switch(date) {
+			case "01.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "23 Days"; break;
+			case "02.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas4.png"); text = "22 Days"; break;
+			case "03.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas2.png"); text = "21 Days"; break;
+			case "04.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "20 Days"; break;
+			case "05.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas2.png"); text = "19 Days"; break;
+			case "06.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas4.png"); text = "18 Days"; break;
+			case "07.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "17 Days"; break;
+			case "08.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas3.png"); text = "16 Days"; break;
+			case "09.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas5.png"); text = "15 Days"; break;
+			case "10.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas4.png"); text = "14 Days"; break;
+			case "11.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas6.png"); text = "13 Days"; break;
+			case "12.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas2.png"); text = "12 Days"; break;
+			case "13.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas3.png"); text = "11 Days"; break;
+			case "14.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "10 Days"; break;
+			case "15.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas6.png"); text = "9 Days"; break;
+			case "16.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas5.png"); text = "8 Days"; break;
+			case "17.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas4.png"); text = "7 Days"; break;
+			case "18.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "6 Days"; break;
+			case "19.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas4.png"); text = "5 Days"; break;
+			case "20.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas5.png"); text = "4 Days"; break;
+			case "21.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas6.png"); text = "3 Days"; break;
+			case "22.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas3.png"); text = "2 Days"; break;
+			case "23.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas1.png"); text = "1 Day"; break;
+			case "24.12": file = new File(LotusManager.configFolderName + "/assets/templates/christmas5.png"); text = "Merry Christmas!"; break;
+			case "25.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk1.png"); text = "6 Days"; break;
+			case "26.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk2.png"); text = "5 Days"; break;
+			case "27.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk3.png"); text = "4 Days"; break;
+			case "28.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk4.png"); text = "3 Days"; break;
+			case "29.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk5.png"); text = "2 Days"; break;
+			case "30.12": file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk6.png"); text = "1 Day"; break;
+			}
+			setDayAsRun(Integer.parseInt(date.split("\\.")[0]));
+			File fileEdit = editFile(file, text);
+			if (fileEdit != null) {
+				channel.sendFiles(FileUpload.fromData(fileEdit)).queue();
+				fileEdit.delete();
 			}
 		}
 		if(date.matches("31.12")) {
-			switch(date) {
+			switch(time) {
 			case "00:00:01": channel.sendMessage("24 Hours until new year!").queue(); break;
 			case "01:00:00": channel.sendMessage("23 Hours until new year!").queue(); break;
 			case "02:00:00": channel.sendMessage("22 Hours until new year!").queue(); break;
@@ -148,7 +149,7 @@ public class XMAS_NEWYEARScheduler extends TimerTask {
 			}
 		}else if(date.matches("01.01")) {
 			switch(time) {
-			case "00:00:01": text = "Happy New Year!"; file = new File("assets/templates/feuerwerk7.png"); break;
+			case "00:00:01": text = "Happy New Year!"; file = new File(LotusManager.configFolderName + "/assets/templates/feuerwerk7.png"); break;
 			}
 			File out = editFile(file, text);
 			if(out != null) {
@@ -178,7 +179,7 @@ public class XMAS_NEWYEARScheduler extends TimerTask {
 		graphics.setColor(Color.decode("#000000"));
 		graphics.drawString(text, x, 141);
 		graphics.dispose();
-		File f = new File("tmp/fwout.png");
+		File f = new File(LotusManager.configFolderName + "/tmp/fwout.png");
 		try {
 			ImageIO.write(tmp, "png", f);
 		} catch (IOException e1) {
@@ -190,13 +191,84 @@ public class XMAS_NEWYEARScheduler extends TimerTask {
 	
 	void registerFont() {
 		try {
-			Font mcfont = Font.createFont(Font.TRUETYPE_FONT, new File("fonts/minecraftia.ttf"));
+			Font mcfont = Font.createFont(Font.TRUETYPE_FONT, new File(LotusManager.configFolderName + "/assets/fonts/minecraftia.ttf"));
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			ge.registerFont(mcfont);
 		} catch (FontFormatException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
 			e1.printStackTrace();
+		}
+	}
+	
+	void setDayAsRun(int day) {
+		YamlFile cfg = new YamlFile(runFile);
+		try {
+			cfg.load();
+			cfg.set("Day." + day, true);
+			cfg.save();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	boolean hasDayRun(int day) {
+		YamlFile cfg = new YamlFile(runFile);
+		try {
+			cfg.load();
+			return cfg.getBoolean("Day." + day);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	void initFile() {
+		if (!runFile.exists()) {
+			try {
+				runFile.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		YamlFile cfg = new YamlFile(runFile);
+		try {
+			cfg.load();
+			cfg.addDefault("Day.1", false);
+			cfg.addDefault("Day.2", false);
+			cfg.addDefault("Day.3", false);
+			cfg.addDefault("Day.4", false);
+			cfg.addDefault("Day.5", false);
+			cfg.addDefault("Day.6", false);
+			cfg.addDefault("Day.7", false);
+			cfg.addDefault("Day.8", false);
+			cfg.addDefault("Day.9", false);
+			cfg.addDefault("Day.10", false);
+			cfg.addDefault("Day.11", false);
+			cfg.addDefault("Day.12", false);
+			cfg.addDefault("Day.13", false);
+			cfg.addDefault("Day.14", false);
+			cfg.addDefault("Day.15", false);
+			cfg.addDefault("Day.16", false);
+			cfg.addDefault("Day.17", false);
+			cfg.addDefault("Day.18", false);
+			cfg.addDefault("Day.19", false);
+			cfg.addDefault("Day.20", false);
+			cfg.addDefault("Day.21", false);
+			cfg.addDefault("Day.22", false);
+			cfg.addDefault("Day.23", false);
+			cfg.addDefault("Day.24", false);
+			cfg.addDefault("Day.25", false);
+			cfg.addDefault("Day.26", false);
+			cfg.addDefault("Day.27", false);
+			cfg.addDefault("Day.28", false);
+			cfg.addDefault("Day.29", false);
+			cfg.addDefault("Day.30", false);
+			cfg.options().copyDefaults(true);
+			cfg.save();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }
