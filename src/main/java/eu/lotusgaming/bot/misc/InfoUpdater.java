@@ -1,18 +1,17 @@
 //Created by Chris Wille at 05.02.2024
 package eu.lotusgaming.bot.misc;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
 
-import com.github.theholywaffle.teamspeak3.api.Property;
-import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
-import com.github.theholywaffle.teamspeak3.api.wrapper.ServerGroupClient;
+import org.simpleyaml.configuration.file.YamlFile;
 
+import com.github.theholywaffle.teamspeak3.api.wrapper.Client;
 import eu.lotusgaming.bot.main.LotusManager;
-import eu.lotusgaming.bot.main.Main;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Guild;
@@ -23,6 +22,18 @@ public class InfoUpdater extends TimerTask{
 	JDA jda;
 	public InfoUpdater(JDA jda) {
 		this.jda = jda;
+	}
+	
+	YamlFile cfg = new YamlFile(LotusManager.mainConfig);
+	boolean useTS3 = false;
+	
+	{
+		try {
+			cfg.load();
+			useTS3 = cfg.getBoolean("TS3.enabled");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -62,31 +73,32 @@ public class InfoUpdater extends TimerTask{
 			e.printStackTrace();
 		}
 		
-		//ts3 asq-instance
-		try {
-			PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, servingUniqueMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingOnlineMembers = ? WHERE botKey = ?");
-			
-			int members = 0;
-			for(Client cli : LotusManager.ts3api.getClients()) {
-				if(!cli.isServerQueryClient()) {
-					members++;
+		if(useTS3) {
+			//ts3 asq-instance
+			try {
+				PreparedStatement ps = MySQL.getConnection().prepareStatement("UPDATE bot_status SET servingGuilds = ?, servingMembers = ?, servingUniqueMembers = ?, lastUpdated = ?, ram_usage = ?, ram_alloc = ?, isOnline = ?, servingOnlineMembers = ? WHERE botKey = ?");
+				
+				int members = 0;
+				for(Client cli : LotusManager.ts3api.getClients()) {
+					if(!cli.isServerQueryClient()) {
+						members++;
+					}
 				}
+				
+				ps.setInt(1, 1);
+				ps.setInt(2, members);
+				ps.setInt(3, members);
+				ps.setLong(4, System.currentTimeMillis());
+				ps.setString(5, getRAMInfo(RAMInfo.USING));
+				ps.setString(6, getRAMInfo(RAMInfo.ALLOCATED));
+				ps.setBoolean(7, true);
+				ps.setInt(8, members);
+				ps.setString(9, "ts3");
+				ps.executeUpdate();
+			} catch (SQLException e) {
+				e.printStackTrace();
 			}
-			
-			ps.setInt(1, 1);
-			ps.setInt(2, members);
-			ps.setInt(3, members);
-			ps.setLong(4, System.currentTimeMillis());
-			ps.setString(5, getRAMInfo(RAMInfo.USING));
-			ps.setString(6, getRAMInfo(RAMInfo.ALLOCATED));
-			ps.setBoolean(7, true);
-			ps.setInt(8, members);
-			ps.setString(9, "ts3");
-			ps.executeUpdate();
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
-		
 	}
 	
 	public String getRAMInfo(RAMInfo type) {
