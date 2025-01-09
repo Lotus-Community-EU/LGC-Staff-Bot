@@ -26,6 +26,8 @@ public class ReadyClass extends ListenerAdapter{
 		timer.scheduleAtFixedRate(new XMAS_NEWYEARScheduler(event.getJDA()), 0, 1000);
 		InfoUpdater.setOnlineStatus(true, "staffBot");
 		InfoUpdater.setOnlineStatus(true, "ts3");
+		
+		new TicketSCommands().loadPendingCloseRequests(event.getJDA());
+		Main.logger.fine("Test onread in TicketSCommands - INFO");
 	}
-
 }
