@@ -22,7 +22,7 @@ public class ReadyClass extends ListenerAdapter{
 		Timer timer = new Timer();
 		timer.scheduleAtFixedRate(new InfoUpdater(event.getJDA()), 1000, 1000*60);
 		timer.scheduleAtFixedRate(new UserCounter(event.getJDA()), 1000, 1000*3600);
-		timer.scheduleAtFixedRate(new Restarter(), 0, 1000);
+		timer.scheduleAtFixedRate(new Restarter(event.getJDA()), 0, 1000);
 		timer.scheduleAtFixedRate(new XMAS_NEWYEARScheduler(event.getJDA()), 0, 1000);
 		InfoUpdater.setOnlineStatus(true, "staffBot");
 		InfoUpdater.setOnlineStatus(true, "ts3");

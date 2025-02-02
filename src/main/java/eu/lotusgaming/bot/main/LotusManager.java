@@ -13,6 +13,9 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
+
+import eu.lotusgaming.bot.command.BirthdayHandler;
+import eu.lotusgaming.bot.command.CustomCommandHandler;
 import eu.lotusgaming.bot.command.LevelSystem;
 import eu.lotusgaming.bot.command.Playerlookup;
 import eu.lotusgaming.bot.command.PunishmentsCommands;
@@ -117,6 +120,8 @@ public class LotusManager {
 		jda.addEventListener(new Playerlookup());
 		jda.addEventListener(new Serverlookup());
 		jda.addEventListener(new ReportHandler());
+		jda.addEventListener(new CustomCommandHandler());
+		jda.addEventListener(new BirthdayHandler());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);
