@@ -147,7 +147,29 @@ public class CommandAdder {
 					
 					Commands.slash("serverinfo", "Looking up specific game server")
 					.setGuildOnly(true)
-					.addOptions(new OptionData(OptionType.STRING, "server", "Specify the Game Server").setAutoComplete(true))
+					.addOptions(new OptionData(OptionType.STRING, "server", "Specify the Game Server").setAutoComplete(true)),
+					
+					Commands.slash("birthday", "Main Command for the birthday function")
+					.setGuildOnly(true)
+					.addSubcommands(
+							new SubcommandData("set", "Sets the birthday")
+							.addOption(OptionType.STRING, "date", "The Date to set (dd/MM -> 26/07)", true),
+							
+							new SubcommandData("remove", "Removes you from the birthday function"),
+							
+							new SubcommandData("next", "Lists the upcoming birthdays in this guild")
+							)
+					
+					/*Commands.slash("customcommands", "Main Command for custom commands")
+					.setGuildOnly(true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+					.addSubcommands(
+							new SubcommandData("add", "Adds an custom command")
+							.addOption(OptionType.ATTACHMENT, "commanddata", "The command data to be added", true),
+							
+							new SubcommandData("remove", "Removes an custom command")
+							.addOption(OptionType.STRING, "commandname", "The custom command to be deleted.", true)
+							)*/ //Commented out until I have the time to implement this.
 					).queue();
 		}
 	}
