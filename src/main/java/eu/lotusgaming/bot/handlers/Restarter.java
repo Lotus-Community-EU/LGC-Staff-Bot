@@ -33,7 +33,7 @@ public class Restarter extends TimerTask{
 		String time = sdf.format(new java.util.Date());
 		if(time.equals("03:00:00")) {
 			System.exit(1);
-		}else if(time.equals("12:14:00")) {
+		}else if(time.equals("00:01:00")) {
 			checkAndAssignBirthdayRoles();
 			removeExpiredBirthdayRoles();
 		}
