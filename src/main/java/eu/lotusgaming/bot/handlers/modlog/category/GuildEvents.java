@@ -100,6 +100,7 @@ public class GuildEvents extends ListenerAdapter{
 			eb.setTitle("Member left");
 			eb.setDescription(user.getName() + " has left the guild.");
 		}
+		ModlogController.sendMessage(eb, guild);
 	}
 	
 	@Override
