@@ -25,7 +25,7 @@ public class Welcomer extends ListenerAdapter{
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setColor(Color.green);
 			eb.setTitle("Welcome to Lotus Gaming, " + member.getEffectiveName());
-			eb.setDescription("Welcome, Välkommen, Hallo, Hola, Merhaba, Salut on Lotus Gaming.\n \nWe all wish you a nice stay in here!\n \nDon't forget about the <#1155411589428690975> and <#1153419307716452454>!");
+			eb.setDescription("Welcome, Välkommen, Hallo, Hola, Merhaba, Salut on Lotus Gaming.\n \nWe all wish you a nice stay in here!\n \nDon't forget to read the <#1155411589428690975> and <#1153419307716452454>!");
 			eb.setThumbnail(member.getEffectiveAvatarUrl());
 			eb.setFooter(new SimpleDateFormat("dd/MM/yy - HH:mm").format(new Date()), guild.getIconUrl());
 			guild.getTextChannelById(1203764541792583780l).sendMessageEmbeds(eb.build()).queue(ra -> {
