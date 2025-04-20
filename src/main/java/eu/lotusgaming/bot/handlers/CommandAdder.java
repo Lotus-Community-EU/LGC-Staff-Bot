@@ -85,7 +85,13 @@ public class CommandAdder {
 					
 					Commands.slash("setinfo", "Sends the info")
 					.setContexts(InteractionContextType.GUILD)
-					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
+					.addOption(OptionType.CHANNEL, "channel", "The channel where the infos should be sent to.", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.slash("updateinfo", "Updates Team Embed")
+					.setContexts(InteractionContextType.GUILD)
+					.addOption(OptionType.CHANNEL, "channel", "The channel where the info has been sent in", true)
+					.addOption(OptionType.NUMBER, "messageid", "The Message-Snowflake-ID of that Teamembed", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("kick", "Kicks a member")
