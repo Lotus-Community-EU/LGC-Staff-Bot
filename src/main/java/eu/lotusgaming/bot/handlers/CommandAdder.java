@@ -15,7 +15,6 @@ public class CommandAdder {
 	
 	public static void addCommands(JDA jda) {
 		for(Guild guild : jda.getGuilds()) {
-			
 			guild.updateCommands().addCommands(
 					//Commands regarding the Ticket System.
 					Commands.slash("setticketchannel", "Sets the Ticket Channel")
@@ -165,7 +164,42 @@ public class CommandAdder {
 							new SubcommandData("remove", "Removes you from the birthday function"),
 							
 							new SubcommandData("next", "Lists the upcoming birthdays in this guild")
-							)
+							),
+					
+					//Private voice 
+					Commands.slash("adminvoice", "Main Admin Command for private voice channels")
+					.setContexts(InteractionContextType.GUILD)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
+					.addSubcommands(
+							new SubcommandData("set-category", "Sets the default category for private voice channels")
+							.addOption(OptionType.CHANNEL, "category", "The category the bot should create voice channels in", true),
+							
+							new SubcommandData("settings", "Setup the private voices")
+							.addOption(OptionType.STRING, "option", "The Option to change", true, true)
+							.addOption(OptionType.STRING, "value", "The new value for this option", true)
+							),
+					
+					Commands.slash("voice", "Main Command for private voice channels")
+					.setContexts(InteractionContextType.GUILD)
+					.addSubcommands(
+							new SubcommandData("create", "Creates a voice channel")
+							.addOption(OptionType.BOOLEAN, "private", "Whether the channel should be public or not. (true=private, false=public)", true)
+							.addOption(OptionType.INTEGER, "slots", "How many slots should the voice channel have?"),
+							
+							new SubcommandData("delete", "Deletes the voice channel"),
+							
+							new SubcommandData("permit", "Adds a person to the channel permissions (just for private channels!)")
+							.addOption(OptionType.USER, "user", "The user to permit to this channel", true),
+							
+							new SubcommandData("revoke", "Removes a person from the channel permissions (just for private channels!)")
+							.addOption(OptionType.USER, "user", "The user to remove from this channel", true)
+							.addOption(OptionType.BOOLEAN, "remove", "Whether to forcefully remove from the voice channel or not", true)
+							),
+					
+					Commands.slash("whois", "View account infos like online status, join datum, etc.")
+				    .addOption(OptionType.USER, "user", "The User you want the info about."),
+				    
+				    Commands.slash("guildinfo", "View guild relevant informations like roles, users and such.")
 					
 					/*Commands.slash("customcommands", "Main Command for custom commands")
 					.setContexts(InteractionContextType.GUILD)
