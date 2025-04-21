@@ -199,7 +199,10 @@ public class CommandAdder {
 					Commands.slash("whois", "View account infos like online status, join datum, etc.")
 				    .addOption(OptionType.USER, "user", "The User you want the info about."),
 				    
-				    Commands.slash("guildinfo", "View guild relevant informations like roles, users and such.")
+				    Commands.slash("guildinfo", "View guild relevant informations like roles, users and such."),
+				    Commands.slash("cat", "Random Cat Image/GIF"),
+				    Commands.slash("dog", "Random Dog Image/GIF"),
+				    Commands.slash("fox", "Random Fox Image/GIF")
 					
 					/*Commands.slash("customcommands", "Main Command for custom commands")
 					.setContexts(InteractionContextType.GUILD)
