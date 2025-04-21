@@ -217,7 +217,7 @@ public class GuildEvents extends ListenerAdapter{
 		Member member = event.getMember();
 		
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
-		eb.setTitle(member.getEffectiveName() + " updated Avatar (Guildspecific)");
+		eb.setDescription(member.getAsMention() + " updated their Guildspecific Avatar");
 		if(event.getNewAvatarUrl() != null) {
 			eb.setImage(event.getNewAvatarUrl());
 		}else {
