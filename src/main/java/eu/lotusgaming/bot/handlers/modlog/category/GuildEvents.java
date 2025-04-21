@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -92,6 +93,7 @@ public class GuildEvents extends ListenerAdapter{
 		}
 		
 		eb.addField("Roles (" + roleCount + ")", "The user has these roles: " + roles, false);
+		eb.addField("Joined " + guild.getName(), Objects.requireNonNullElse(ModlogController.odtToString(event.getMember().getTimeJoined(), "dd/MM/yyyy - HH:mm:ss"), "not cached"), false);
 		eb.setColor(ModlogController.red);
 		if(checkList.contains(user)) {
 			eb.setTitle("Member has been banned and left.");
@@ -100,6 +102,7 @@ public class GuildEvents extends ListenerAdapter{
 			eb.setTitle("Member left");
 			eb.setDescription(user.getName() + " has left the guild.");
 		}
+		ModlogController.sendMessage(eb, guild);
 	}
 	
 	@Override
@@ -134,9 +137,9 @@ public class GuildEvents extends ListenerAdapter{
 		eb.setColor(ModlogController.green);
 		eb.setThumbnail(member.getEffectiveAvatarUrl());
 		if(event.getUser().isBot()) {
-			eb.setDescription(member.getAsMention() + " has joined " + guild.getName() + ".\n \nAccount Creation: " + ModlogController.odtToString(member.getTimeCreated(), "dd.MM.yyyy - HH:mm:ss") + "\n" + member.getAsMention() + " is a bot account.");
+			eb.setDescription(member.getAsMention() + " has joined " + guild.getName() + ".\n \nAccount Creation: " + ModlogController.odtToString(member.getTimeCreated(), "dd.MM.yyyy - HH:mm:ss") + "\n" + member.getEffectiveName() + " is a bot account.");
 		}else {
-			eb.setDescription(member.getAsMention() + " has joined " + guild.getName() + ".\n \nAccount Creation: " + ModlogController.odtToString(member.getTimeCreated(), "dd.MM.yyyy - HH:mm:ss") + "\n" + member.getAsMention() + " is an user account.");
+			eb.setDescription(member.getAsMention() + " has joined " + guild.getName() + ".\n \nAccount Creation: " + ModlogController.odtToString(member.getTimeCreated(), "dd.MM.yyyy - HH:mm:ss") + "\n" + member.getEffectiveName() + " is an user account.");
 		}
 		ModlogController.sendMessage(eb, guild);
 	}
@@ -214,7 +217,7 @@ public class GuildEvents extends ListenerAdapter{
 		Member member = event.getMember();
 		
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
-		eb.setTitle(member.getEffectiveName() + " updated Avatar (Guildspecific)");
+		eb.setDescription(member.getAsMention() + " updated their Guildspecific Avatar");
 		if(event.getNewAvatarUrl() != null) {
 			eb.setImage(event.getNewAvatarUrl());
 		}else {

@@ -40,7 +40,6 @@ public class RoleEvents extends ListenerAdapter {
 		EmbedBuilder eb = ModlogController.baseEmbed(guild);
 		eb.setTitle("Deleted a Role");
 		eb.setDescription("Role Name: " + event.getRole().getAsMention() + " \nRole ID: " + event.getRole().getIdLong());
-		eb.setThumbnail(event.getRole().getIcon().getIconUrl());
 		eb.setColor(ModlogController.green);
 		ModlogController.sendMessage(eb, guild);
 	}

@@ -13,8 +13,13 @@ import com.github.theholywaffle.teamspeak3.TS3Api;
 import com.github.theholywaffle.teamspeak3.TS3Config;
 import com.github.theholywaffle.teamspeak3.TS3Query;
 import com.github.theholywaffle.teamspeak3.TS3Query.FloodRate;
+
+import eu.lotusgaming.bot.command.AnimalsImage;
+import eu.lotusgaming.bot.command.BirthdayHandler;
+import eu.lotusgaming.bot.command.CustomCommandHandler;
 import eu.lotusgaming.bot.command.LevelSystem;
 import eu.lotusgaming.bot.command.Playerlookup;
+import eu.lotusgaming.bot.command.PublicVoiceHandler;
 import eu.lotusgaming.bot.command.PunishmentsCommands;
 import eu.lotusgaming.bot.command.PurgeCommand;
 import eu.lotusgaming.bot.command.SayCommand;
@@ -24,9 +29,11 @@ import eu.lotusgaming.bot.command.SetRulesCommand;
 import eu.lotusgaming.bot.command.StatusActivityCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
+import eu.lotusgaming.bot.command.UserCommands;
 import eu.lotusgaming.bot.handlers.ReportHandler;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
+import eu.lotusgaming.bot.handlers.modlog.category.ChannelEvents;
 import eu.lotusgaming.bot.misc.MySQL;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDAInfo;
@@ -117,6 +124,12 @@ public class LotusManager {
 		jda.addEventListener(new Playerlookup());
 		jda.addEventListener(new Serverlookup());
 		jda.addEventListener(new ReportHandler());
+		jda.addEventListener(new CustomCommandHandler());
+		jda.addEventListener(new BirthdayHandler());
+		jda.addEventListener(new PublicVoiceHandler());
+		jda.addEventListener(new UserCommands());
+		jda.addEventListener(new ChannelEvents());
+		jda.addEventListener(new AnimalsImage());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);

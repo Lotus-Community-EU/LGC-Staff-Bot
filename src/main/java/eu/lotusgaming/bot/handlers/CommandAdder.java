@@ -3,6 +3,7 @@ package eu.lotusgaming.bot.handlers;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.Command.Type;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -14,22 +15,21 @@ public class CommandAdder {
 	
 	public static void addCommands(JDA jda) {
 		for(Guild guild : jda.getGuilds()) {
-			
 			guild.updateCommands().addCommands(
 					//Commands regarding the Ticket System.
 					Commands.slash("setticketchannel", "Sets the Ticket Channel")
 					.addOption(OptionType.CHANNEL, "channel", "The Channel where the message should be sent to.")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("tickets", "See all tickets an user has ever made.")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.USER, "user", "The user to lookup")
 					.addOption(OptionType.INTEGER, "userid", "The user id to lookup")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("tickethistory", "See the chat of that ticket")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.INTEGER, "ticketid", "The ticket id to lookup", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
@@ -37,7 +37,7 @@ public class CommandAdder {
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
 					
 					Commands.slash("ticket", "Main command for the Ticket System")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS, Permission.KICK_MEMBERS))
 					.addSubcommands(
                             new SubcommandData("adduser", "Adds an user to this ticket")
@@ -59,7 +59,7 @@ public class CommandAdder {
 					Commands.context(Type.MESSAGE, "Report this!"),
 					
 					Commands.slash("ticketban", "Bans a user/id from using the ticket system")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.INTEGER, "userid", "The userid to ban")
 					.addOption(OptionType.USER, "user", "The user to ban")
 					.addOption(OptionType.STRING, "reason", "The Reason for the ban")
@@ -68,33 +68,39 @@ public class CommandAdder {
 					
 					//Commands regarding the Suggestion System.
 					Commands.slash("setsuggestionboardchannel", "Sets the Suggestion Info Channel")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the message should be sent to")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("setsuggestionmessagechannel", "Sets the Suggestionboard Channel")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the message should be sent to")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("setrules", "Sends the rules")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("setinfo", "Sends the info")
-					.setGuildOnly(true)
-					.addOption(OptionType.CHANNEL, "channel", "The channel where the rules should be sent to.", true)
+					.setContexts(InteractionContextType.GUILD)
+					.addOption(OptionType.CHANNEL, "channel", "The channel where the infos should be sent to.", true)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
+					
+					Commands.slash("updateinfo", "Updates Team Embed")
+					.setContexts(InteractionContextType.GUILD)
+					.addOption(OptionType.CHANNEL, "channel", "The channel where the info has been sent in", true)
+					.addOption(OptionType.NUMBER, "messageid", "The Message-Snowflake-ID of that Teamembed", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR)),
 					
 					Commands.slash("kick", "Kicks a member")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.USER, "user", "The user to kick", true)
 					.addOption(OptionType.STRING, "reason", "The reason why the user gets kicked", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.KICK_MEMBERS)),
 					
 					Commands.slash("ban", "Bans a member")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.USER, "user", "The user to ban", true)
 					.addOption(OptionType.STRING, "reason", "The reason why the user gets banned", true)
 					.addOption(OptionType.INTEGER, "time", "Time for the ban's persistiency (0 for Permanent)", true)
@@ -102,13 +108,13 @@ public class CommandAdder {
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS)),
 					
 					Commands.slash("warn", "Warns a member")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.USER, "user", "The user to warn", true)
 					.addOption(OptionType.STRING, "reason", "The reason why the user gets warned", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
 					
 					Commands.slash("mute", "Mutes a member (Utilising timeout)")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.USER, "user", "The user to mute", true)
 					.addOption(OptionType.STRING, "reason", "The reason why the user got muted", true)
 					.addOption(OptionType.INTEGER, "time", "Time for the ban's persistiency (0 for Permanent)", true)
@@ -116,22 +122,22 @@ public class CommandAdder {
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.BAN_MEMBERS, Permission.KICK_MEMBERS)),
 					
 					Commands.slash("say", "Let the bot talk")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.CHANNEL, "targetchannel", "The Channel the bot should write in", true)
 					.addOption(OptionType.STRING, "text", "The text the bot should write", true)
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR, Permission.MANAGE_CHANNEL, Permission.MANAGE_SERVER)),
 					
 					Commands.slash("purge", "Purge messages from in this channel.")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.INTEGER, "messages", "The count of messages to be deleted (max 100)", true)
 					.addOption(OptionType.USER, "member", "Only delete the messages from this user (optional)")
 					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL, Permission.MESSAGE_MANAGE, Permission.MANAGE_SERVER)),
 					
 					Commands.slash("set-status", "Modify the online status for the bot")
-					.setGuildOnly(false),
+					.setContexts(InteractionContextType.ALL),
 					
 					Commands.slash("set-activity", "Modify the activity status for the bot")
-					.setGuildOnly(false)
+					.setContexts(InteractionContextType.ALL)
 					.addOption(OptionType.STRING, "option", "Choose what kind of activity the bot should display", true, true)
 					.addOption(OptionType.STRING, "text", "The text followed up", true),
 					
@@ -142,12 +148,72 @@ public class CommandAdder {
 					.addOption(OptionType.USER, "member", "The member to lookup."),
 					
 					Commands.slash("mclookup", "Player Lookup on Lotus for Minecraft")
-					.setGuildOnly(true)
+					.setContexts(InteractionContextType.GUILD)
 					.addOption(OptionType.STRING, "player", "The player to lookup", true, true),
 					
 					Commands.slash("serverinfo", "Looking up specific game server")
-					.setGuildOnly(true)
-					.addOptions(new OptionData(OptionType.STRING, "server", "Specify the Game Server").setAutoComplete(true))
+					.setContexts(InteractionContextType.GUILD)
+					.addOptions(new OptionData(OptionType.STRING, "server", "Specify the Game Server").setAutoComplete(true)),
+					
+					Commands.slash("birthday", "Main Command for the birthday function")
+					.setContexts(InteractionContextType.GUILD)
+					.addSubcommands(
+							new SubcommandData("set", "Sets the birthday")
+							.addOption(OptionType.STRING, "date", "The Date to set (dd/MM -> 26/07)", true),
+							
+							new SubcommandData("remove", "Removes you from the birthday function"),
+							
+							new SubcommandData("next", "Lists the upcoming birthdays in this guild")
+							),
+					
+					//Private voice 
+					Commands.slash("adminvoice", "Main Admin Command for private voice channels")
+					.setContexts(InteractionContextType.GUILD)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.MANAGE_CHANNEL))
+					.addSubcommands(
+							new SubcommandData("set-category", "Sets the default category for private voice channels")
+							.addOption(OptionType.CHANNEL, "category", "The category the bot should create voice channels in", true),
+							
+							new SubcommandData("settings", "Setup the private voices")
+							.addOption(OptionType.STRING, "option", "The Option to change", true, true)
+							.addOption(OptionType.STRING, "value", "The new value for this option", true)
+							),
+					
+					Commands.slash("voice", "Main Command for private voice channels")
+					.setContexts(InteractionContextType.GUILD)
+					.addSubcommands(
+							new SubcommandData("create", "Creates a voice channel")
+							.addOption(OptionType.BOOLEAN, "private", "Whether the channel should be public or not. (true=private, false=public)", true)
+							.addOption(OptionType.INTEGER, "slots", "How many slots should the voice channel have?"),
+							
+							new SubcommandData("delete", "Deletes the voice channel"),
+							
+							new SubcommandData("permit", "Adds a person to the channel permissions (just for private channels!)")
+							.addOption(OptionType.USER, "user", "The user to permit to this channel", true),
+							
+							new SubcommandData("revoke", "Removes a person from the channel permissions (just for private channels!)")
+							.addOption(OptionType.USER, "user", "The user to remove from this channel", true)
+							.addOption(OptionType.BOOLEAN, "remove", "Whether to forcefully remove from the voice channel or not", true)
+							),
+					
+					Commands.slash("whois", "View account infos like online status, join datum, etc.")
+				    .addOption(OptionType.USER, "user", "The User you want the info about."),
+				    
+				    Commands.slash("guildinfo", "View guild relevant informations like roles, users and such."),
+				    Commands.slash("cat", "Random Cat Image/GIF"),
+				    Commands.slash("dog", "Random Dog Image/GIF"),
+				    Commands.slash("fox", "Random Fox Image/GIF")
+					
+					/*Commands.slash("customcommands", "Main Command for custom commands")
+					.setContexts(InteractionContextType.GUILD)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+					.addSubcommands(
+							new SubcommandData("add", "Adds an custom command")
+							.addOption(OptionType.ATTACHMENT, "commanddata", "The command data to be added", true),
+							
+							new SubcommandData("remove", "Removes an custom command")
+							.addOption(OptionType.STRING, "commandname", "The custom command to be deleted.", true)
+							)*/ //Commented out until I have the time to implement this.
 					).queue();
 		}
 	}

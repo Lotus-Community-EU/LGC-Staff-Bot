@@ -19,11 +19,14 @@ public class ReadyClass extends ListenerAdapter{
 		TicketSCommands.loadLastTicketId();
 		PunishmentsCommands.loadLastPunishmentId();
 		CommandAdder.addCommands(event.getJDA());
-		Timer timer = new Timer();
-		timer.scheduleAtFixedRate(new InfoUpdater(event.getJDA()), 1000, 1000*60);
-		timer.scheduleAtFixedRate(new UserCounter(event.getJDA()), 1000, 1000*3600);
-		timer.scheduleAtFixedRate(new Restarter(), 0, 1000);
-		timer.scheduleAtFixedRate(new XMAS_NEWYEARScheduler(event.getJDA()), 0, 1000);
+		Timer timer1 = new Timer();
+		Timer timer2 = new Timer();
+		Timer timer3 = new Timer();
+		Timer timer4 = new Timer();
+		timer1.scheduleAtFixedRate(new InfoUpdater(event.getJDA()), 1000, 1000*60);
+		timer2.scheduleAtFixedRate(new UserCounter(event.getJDA()), 1000, 1000*3600);
+		timer3.scheduleAtFixedRate(new Restarter(event.getJDA()), 0, 1000);
+		timer4.scheduleAtFixedRate(new XMAS_NEWYEARScheduler(event.getJDA()), 0, 1000);
 		InfoUpdater.setOnlineStatus(true, "staffBot");
 		InfoUpdater.setOnlineStatus(true, "ts3");
 		
