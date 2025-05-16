@@ -477,7 +477,7 @@ public class LevelSystem extends ListenerAdapter {
 	
 	public int getPointsForCurrentLevel(int level) {
 		switch(level) {
-		case 1: return 0;
+		case 1: return 10;
 		case 2: return 25;
 		case 3: return 50;
 		case 4: return 75;
@@ -542,6 +542,7 @@ public class LevelSystem extends ListenerAdapter {
 	
 	public int getPointsForNextLevel(int level) {
 		switch(level) {
+		case 1: return 10;
 		case 2: return 25;
 		case 3: return 50;
 		case 4: return 75;
