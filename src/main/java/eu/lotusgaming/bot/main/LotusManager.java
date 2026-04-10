@@ -30,6 +30,7 @@ import eu.lotusgaming.bot.command.StatusActivityCommand;
 import eu.lotusgaming.bot.command.SuggestionBoard;
 import eu.lotusgaming.bot.command.TicketSCommands;
 import eu.lotusgaming.bot.command.UserCommands;
+import eu.lotusgaming.bot.handlers.FlyTrapHandler;
 import eu.lotusgaming.bot.handlers.ReportHandler;
 import eu.lotusgaming.bot.handlers.Welcomer;
 import eu.lotusgaming.bot.handlers.modlog.ModlogController;
@@ -130,6 +131,7 @@ public class LotusManager {
 		jda.addEventListener(new UserCommands());
 		jda.addEventListener(new ChannelEvents());
 		jda.addEventListener(new AnimalsImage());
+		jda.addEventListener(new FlyTrapHandler());
 		
 		Main.logger.info("Initialisation took " + (System.currentTimeMillis() - current) + "ms.");
 		displayLogo(jda);

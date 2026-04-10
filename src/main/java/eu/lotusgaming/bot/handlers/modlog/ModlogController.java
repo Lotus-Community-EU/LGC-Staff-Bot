@@ -73,6 +73,11 @@ public class ModlogController {
 		channel.sendMessageEmbeds(eb.build())
 		.addFiles(FileUpload.fromData(file, filename)).queue();
 	}
+
+	public static void sendMessageWithPing(EmbedBuilder eb, Guild guild, String ping) {
+		TextChannel channel = guild.getTextChannelById(getTextChannelByGuildId(guild.getIdLong()));
+		channel.sendMessage(ping).setEmbeds(eb.build()).queue();
+	}
 	
 	public static EmbedBuilder baseEmbed(Guild guild) {
 		EmbedBuilder eb = new EmbedBuilder();
