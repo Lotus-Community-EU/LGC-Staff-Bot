@@ -219,7 +219,12 @@ public class CommandAdder {
 				    Commands.slash("guildinfo", "View guild relevant informations like roles, users and such."),
 				    Commands.slash("cat", "Random Cat Image/GIF"),
 				    Commands.slash("dog", "Random Dog Image/GIF"),
-				    Commands.slash("fox", "Random Fox Image/GIF")
+				    Commands.slash("fox", "Random Fox Image/GIF"),
+					
+					Commands.slash("sendflytrapmsg", "Sends the premade flytrap-channel text")
+					.setContexts(InteractionContextType.GUILD)
+					.setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.ADMINISTRATOR))
+					.addOption(OptionType.CHANNEL, "channel", "The channel to send the message in", true)
 					
 					/*Commands.slash("customcommands", "Main Command for custom commands")
 					.setContexts(InteractionContextType.GUILD)
