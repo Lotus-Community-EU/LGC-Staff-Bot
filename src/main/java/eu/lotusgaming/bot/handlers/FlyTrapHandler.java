@@ -53,8 +53,13 @@ public class FlyTrapHandler extends ListenerAdapter {
                 if(!member.getRoles().contains(staffRole)) {
                     event.getMessage().delete().queue();
                     member.timeoutFor(1, TimeUnit.DAYS).reason("Autoquarantined by FlyTrap-Channel").queue();
+                    EmbedBuilder eb = ModlogController.baseEmbed(guild);
+                    eb.setTitle("User " + member.getEffectiveName() + " posted in the Fly Trap Channel");
+                    eb.setColor(ModlogController.red);
+                    ModlogController.sendMessage(eb, guild);
                     deleteUserMessagesInAllChannels(event, member, 5);
                 }else if(member.getRoles().contains(staffRole)) {
+                    if(member.getUser().isBot()) return;
                     EmbedBuilder eb = ModlogController.baseEmbed(guild);
                     eb.setTitle("Staff Member " + member.getEffectiveName() + " posted in the Fly Trap Channel");
                     Role upperStaffRole = guild.getRoleById(1203440790081380443L);
